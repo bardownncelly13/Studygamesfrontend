@@ -14,7 +14,7 @@ export default async function callAzureOpenAI(messages) {
 
   try {
     const response = await axios.post(
-      "http://localhost:8080/api",
+      "https://studygames-backend-80244932095.us-central1.run.app",
       { messages },  // POST body here
       {
         headers: {
