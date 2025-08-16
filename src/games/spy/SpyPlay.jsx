@@ -34,7 +34,7 @@ const defaultDeck = [
   { id: 25, prompt: "Police Station" },
 ];
 
-const socket = io("wss://studygames-backend-80244932095.us-central1.run.app");
+const socket = io("https://studygames-backend-80244932095.us-central1.run.app");
 
 const SpyPlay = () => {
   const { lobbyCode, deckId } = useParams();
