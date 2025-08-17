@@ -11,7 +11,9 @@ export default async function callAzureOpenAI(messages) {
   const token = session?.access_token;
 
   if (!token) throw new Error('No access token found');
-
+  if (!process.env.REACT_APP_BACKEND_URL) {
+  throw new Error("REACT_APP_BACKEND_URL is undefined!");
+  }
   try {
     const response = await axios.post(
        `${process.env.REACT_APP_BACKEND_URL}`,
