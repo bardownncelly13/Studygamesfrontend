@@ -97,29 +97,93 @@ const SpyLobby = ({ deck, onBack }) => {
   
   const generateLobbyCode = () =>
     Math.random().toString(36).substring(2, 8).toUpperCase();
-
+ 
   // Create lobby (host)
-  const handleCreateLobby = async() => {
-    if (!playerName.trim()) return;
-     if (!socket.connected) {
-    console.log("Waiting for socket to connect...");
+  // const handleCreateLobby = async() => {
+  //   if (!playerName.trim()) return;
+  //    if (!socket.connected) {
+  //   console.log("Waiting for socket to connect...");
+  //   await new Promise(resolve => socket.once("connect", resolve));
+  //  }
+
+  //   const code = generateLobbyCode();
+  //   setLoading(true);
+  //   setIsHost(true);
+
+  //   console.log("Creating lobby with code:", code);
+  //   socket.emit("createLobby", { code, host: { id: userId, name: playerName },deck: deck.cards });
+
+  //   socket.once("lobbyCreated", ({ code: createdCode, players , deck}) => {
+  //     console.log("Lobby successfully created:", createdCode, players, deck);
+  //     setLoading(false);
+  //     setLobbyCode(createdCode);
+  //     navigate(`/lobby/${createdCode}`);
+  //   });
+  // };
+function logToScreen(...args) {
+  const msg = args.map(a => {
+    try {
+      return typeof a === "object" ? JSON.stringify(a) : String(a);
+    } catch {
+      return String(a);
+    }
+  }).join(" ");
+  
+  const el = document.createElement("div");
+  el.textContent = msg;
+  el.style.fontSize = "14px";
+  el.style.padding = "2px";
+  el.style.borderBottom = "1px solid #ccc";
+  document.body.appendChild(el);
+
+  console.log(...args);
+}
+
+// Create lobby (host)
+const handleCreateLobby = async () => {
+  if (!playerName.trim()) {
+    logToScreen("❌ Player name missing, cannot create lobby");
+    return;
+  }
+
+  // Ensure socket is connected
+  if (!socket.connected) {
+    logToScreen("⏳ Waiting for socket to connect...");
     await new Promise(resolve => socket.once("connect", resolve));
-   }
+    logToScreen("✅ Socket connected:", socket.id);
+  } else {
+    logToScreen("✅ Socket already connected:", socket.id);
+  }
 
-    const code = generateLobbyCode();
-    setLoading(true);
-    setIsHost(true);
+  const code = generateLobbyCode();
+  setLoading(true);
+  setIsHost(true);
 
-    console.log("Creating lobby with code:", code);
-    socket.emit("createLobby", { code, host: { id: userId, name: playerName },deck: deck.cards });
+  logToScreen("🚀 Emitting createLobby with code:", code);
 
-    socket.once("lobbyCreated", ({ code: createdCode, players , deck}) => {
-      console.log("Lobby successfully created:", createdCode, players, deck);
-      setLoading(false);
-      setLobbyCode(createdCode);
-      navigate(`/lobby/${createdCode}`);
-    });
-  };
+  socket.emit("createLobby", { 
+    code, 
+    host: { id: userId, name: playerName }, 
+    deck: deck.cards 
+  });
+
+  // Timeout fallback in case event never comes
+  const timeout = setTimeout(() => {
+    logToScreen("⚠️ Timed out waiting for lobbyCreated event!");
+    setLoading(false);
+  }, 5000);
+
+  socket.once("lobbyCreated", ({ code: createdCode, players, deck }) => {
+    clearTimeout(timeout);
+    logToScreen("🎉 Lobby successfully created:", createdCode);
+    logToScreen("Players:", players);
+    logToScreen("Deck size:", deck?.length || 0);
+
+    setLoading(false);
+    setLobbyCode(createdCode);
+    navigate(`/lobby/${createdCode}`);
+  });
+};
 
   // Join lobby (non-host)
   const handleJoinLobby = () => {
