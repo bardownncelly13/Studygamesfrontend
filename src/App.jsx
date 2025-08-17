@@ -111,7 +111,6 @@ const App = () => (
     <Routes>
         <Route path="/" element={<AppContent />} /> 
         <Route path="/lobby/:lobbyCode" element={<SpyPlay />} />
-        <Route path="/lobby/:lobbyCode/:deckId" element={<SpyPlay />} />
     </Routes>
   </AuthProvider>
 );
