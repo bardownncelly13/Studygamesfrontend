@@ -120,18 +120,18 @@ const SpyLobby = ({ deck, onBack }) => {
   //     navigate(`/lobby/${createdCode}`);
   //   });
   // };
-  useEffect(() => {
-  if(lobbyCode, isHost,deck,players){
-  logToScreen("🟢 Lobby component mounted with props/state:", {
-    lobbyCode,
-    isHost,
-    deck,
-    players,
-  });
-  }
-  else{
-    logToScreen("w8")
-  }
+  // useEffect(() => {
+  // if(lobbyCode, isHost,deck,players){
+  // logToScreen("🟢 Lobby component mounted with props/state:", {
+  //   lobbyCode,
+  //   isHost,
+  //   deck,
+  //   players,
+  // });
+  // }
+  // else{
+  //   logToScreen("w8")
+  // }
 }, [lobbyCode, isHost, deck, players]);
 function logToScreen(...args) {
   const msg = args.map(a => {
