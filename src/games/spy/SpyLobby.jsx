@@ -120,6 +120,14 @@ const SpyLobby = ({ deck, onBack }) => {
   //     navigate(`/lobby/${createdCode}`);
   //   });
   // };
+  useEffect(() => {
+  logToScreen("🟢 Lobby component mounted with props/state:", {
+    lobbyCode,
+    isHost,
+    deck,
+    players,
+  });
+}, [lobbyCode, isHost, deck, players]);
 function logToScreen(...args) {
   const msg = args.map(a => {
     try {
