@@ -3,7 +3,8 @@ import axios from 'axios';
 
 export default async function callAzureOpenAI(messages) {
   // Get current user
-  const backendUrl = process.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  console.log("Backend URL:", backendUrl); // must show the full URL
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
@@ -13,6 +14,7 @@ export default async function callAzureOpenAI(messages) {
   const token = session?.access_token;
 
   if (!token) throw new Error('No access token found');
+
   try {
     const response = await axios.post(
        backendUrl,
