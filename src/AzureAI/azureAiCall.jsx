@@ -3,6 +3,9 @@ import axios from 'axios';
 
 export default async function callAzureOpenAI(messages) {
   // Get current user
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
+  console.log("Backend URL:", backendUrl); // must show the full URL
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
@@ -16,7 +19,7 @@ export default async function callAzureOpenAI(messages) {
   }
   try {
     const response = await axios.post(
-       `${process.env.REACT_APP_BACKEND_URL}`,
+       backendUrl,
       { messages },  // POST body here
       {
         headers: {
