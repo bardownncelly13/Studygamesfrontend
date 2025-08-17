@@ -132,6 +132,7 @@ function logToScreen(...args) {
   const el = document.createElement("div");
   el.textContent = msg;
   el.style.fontSize = "14px";
+  el.style.color = "white";   
   el.style.padding = "2px";
   el.style.borderBottom = "1px solid #ccc";
   document.body.appendChild(el);
