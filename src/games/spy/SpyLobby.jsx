@@ -99,8 +99,13 @@ const SpyLobby = ({ deck, onBack }) => {
     Math.random().toString(36).substring(2, 8).toUpperCase();
 
   // Create lobby (host)
-  const handleCreateLobby = () => {
-    if (!socket || !playerName.trim()) return;
+  const handleCreateLobby = async() => {
+    if (!playerName.trim()) return;
+     if (!socket.connected) {
+    console.log("Waiting for socket to connect...");
+    await new Promise(resolve => socket.once("connect", resolve));
+   }
+
     const code = generateLobbyCode();
     setLoading(true);
     setIsHost(true);
