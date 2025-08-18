@@ -37,7 +37,44 @@ const defaultDeck = [
 const socket = io("https://studygames-backend-80244932095.us-central1.run.app");
 
 const SpyPlay = () => {
-  
+  function logToScreen(...args) {
+  const msg = args.map(a => {
+    try {
+      return typeof a === "object" ? JSON.stringify(a) : String(a);
+    } catch {
+      return String(a);
+    }
+  }).join(" ");
+
+  // Floating debug panel
+  let debugPanel = document.getElementById("debug-panel");
+  if (!debugPanel) {
+    debugPanel = document.createElement("div");
+    debugPanel.id = "debug-panel";
+    debugPanel.style.position = "fixed";
+    debugPanel.style.top = "10px";
+    debugPanel.style.right = "10px";
+    debugPanel.style.maxHeight = "40vh";
+    debugPanel.style.width = "90%";
+    debugPanel.style.overflowY = "auto";
+    debugPanel.style.backgroundColor = "white";
+    debugPanel.style.color = "black";
+    debugPanel.style.padding = "8px";
+    debugPanel.style.fontSize = "12px";
+    debugPanel.style.border = "1px solid black";
+    debugPanel.style.zIndex = 9999;
+    debugPanel.style.fontFamily = "monospace";
+    document.body.appendChild(debugPanel);
+  }
+
+  const el = document.createElement("div");
+  el.textContent = msg;
+  debugPanel.appendChild(el);
+  debugPanel.scrollTop = debugPanel.scrollHeight;
+
+  console.log(...args);
+}
+
   const { lobbyCode, deckId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -52,23 +89,8 @@ const SpyPlay = () => {
   const [crossedPlayers, setCrossedPlayers] = useState([]);
   const [crossedLocations, setCrossedLocations] = useState([]);
   useEffect(() => {
-  console.log("✅ SpyPlay mounted with code:", lobbyCode);
-  document.body.append("✅ SpyPlay mounted\n");
+  logToScreen("✅ SpyPlay mounted with code:", lobbyCode);
 }, [lobbyCode]);
-
-if (!currentUser || deck.length === 0 || loading) {
-  return (
-    <div className="h-screen flex items-center justify-center text-white text-lg">
-      Loading lobby...
-    </div>
-  );
-}
-useEffect(() => {
-  if (deck.length === 0 && lobbyCode) {
-    console.log("Requesting deck from server");
-    socket.emit("requestLobbyDeck", { code: lobbyCode });
-  }
-}, [deck, lobbyCode]);
   const toggleCrossedLocation = (id) => { //for crossing out locations
       setCrossedLocations((prev) =>
         prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
@@ -243,30 +265,6 @@ const handleLeaveLobby = () => {
   }
   navigate("/"); 
 };
-useEffect(() => {
-  if (deck.length === 0) {
-    console.log("No deck from server, using default deck");
-    setDeck(defaultDeck);
-  }
-}, [deck]);
-useEffect(() => {
-  // Restore saved lobby data if available
-  const saved = localStorage.getItem(`spyGame_${lobbyCode}`);
-  if (saved) {
-    const { location, roles, gameStarted, crossedPlayers, crossedLocations, deck: savedDeck } =
-      JSON.parse(saved);
-    setLocation(location);
-    setRoles(roles);
-    setGameStarted(gameStarted);
-    setCrossedPlayers(crossedPlayers || []);
-    setCrossedLocations(crossedLocations || []);
-    if (savedDeck) setDeck(savedDeck);
-  }
-
-  // Ensure currentUser is set
-  const userFromStorage = getPersistedUser();
-  if (userFromStorage) setCurrentUser(userFromStorage);
-}, [lobbyCode]);
   return (
   <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 p-6 text-white">
     
