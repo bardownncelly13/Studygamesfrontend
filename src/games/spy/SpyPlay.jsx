@@ -55,6 +55,43 @@ const SpyPlay = () => {
   console.log("✅ SpyPlay mounted with code:", lobbyCode);
   document.body.append("✅ SpyPlay mounted\n");
 }, [lobbyCode]);
+useEffect(() => {
+  if (deck.length === 0) {
+    console.log("No deck from server, using default deck");
+    setDeck(defaultDeck);
+  }
+}, [deck]);
+useEffect(() => {
+  // Restore saved lobby data if available
+  const saved = localStorage.getItem(`spyGame_${lobbyCode}`);
+  if (saved) {
+    const { location, roles, gameStarted, crossedPlayers, crossedLocations, deck: savedDeck } =
+      JSON.parse(saved);
+    setLocation(location);
+    setRoles(roles);
+    setGameStarted(gameStarted);
+    setCrossedPlayers(crossedPlayers || []);
+    setCrossedLocations(crossedLocations || []);
+    if (savedDeck) setDeck(savedDeck);
+  }
+
+  // Ensure currentUser is set
+  const userFromStorage = getPersistedUser();
+  if (userFromStorage) setCurrentUser(userFromStorage);
+}, [lobbyCode]);
+if (!currentUser || deck.length === 0 || loading) {
+  return (
+    <div className="h-screen flex items-center justify-center text-white text-lg">
+      Loading lobby...
+    </div>
+  );
+}
+useEffect(() => {
+  if (deck.length === 0 && lobbyCode) {
+    console.log("Requesting deck from server");
+    socket.emit("requestLobbyDeck", { code: lobbyCode });
+  }
+}, [deck, lobbyCode]);
   const toggleCrossedLocation = (id) => { //for crossing out locations
       setCrossedLocations((prev) =>
         prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
