@@ -186,6 +186,7 @@ useEffect(() => {
 
   const handleUpdatePlayers = (updatedPlayers) => {
     setPlayers(updatedPlayers);
+    // If lobby empty and no currentUser, request host immediately
     if (updatedPlayers.length === 0 && !currentUser) {
       socket.emit("getHost", { code: lobbyCode });
     }
@@ -196,6 +197,7 @@ useEffect(() => {
     if (host) {
       localStorage.setItem("savedUser", JSON.stringify(host));
       setCurrentUser(host);
+      socket.emit("joinLobby", { code: lobbyCode, player: host }); // join immediately once we have host
     }
   };
 
@@ -208,12 +210,6 @@ useEffect(() => {
     socket.off("hostIs", handleHostIs);
     socket.off("error");
   };
-}, [lobbyCode]);
-
-// 2️⃣ Join lobby once we have both lobbyCode and currentUser
-useEffect(() => {
-  if (!lobbyCode || !currentUser) return;
-  socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
 }, [lobbyCode, currentUser]);
   // Toggle functions
   const toggleCrossedLocation = (id) => setCrossedLocations((prev) => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
