@@ -181,27 +181,19 @@ useEffect(() => {
 }, [currentUser]);
 
 // 2️⃣ Join lobby once both lobbyCode and currentUser exist
-  useEffect(() => {
+useEffect(() => {
   if (!lobbyCode) return;
 
-  logToScreen("🚀 Joining lobby with user:", currentUser);
-
   const handleUpdatePlayers = (updatedPlayers) => {
-    logToScreen("👥 updatePlayers received:", updatedPlayers);
     setPlayers(updatedPlayers);
-
-    // If lobby is empty and we don't have a currentUser, fetch the host
     if (updatedPlayers.length === 0 && !currentUser) {
-      logToScreen("⏳ Lobby empty, fetching host from server");
       socket.emit("getHost", { code: lobbyCode });
     }
-
     setLoading(false);
   };
 
   const handleHostIs = ({ host }) => {
     if (host) {
-      logToScreen("⭐ Setting currentUser to host:", host);
       localStorage.setItem("savedUser", JSON.stringify(host));
       setCurrentUser(host);
     }
@@ -209,22 +201,20 @@ useEffect(() => {
 
   socket.on("updatePlayers", handleUpdatePlayers);
   socket.on("hostIs", handleHostIs);
-  socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
-
-  // Only emit joinLobby if we already have a currentUser
-  if (currentUser) {
-    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
-  } else {
-    logToScreen("⏳ Waiting for currentUser before joinLobby");
-  }
+  socket.on("error", console.warn);
 
   return () => {
     socket.off("updatePlayers", handleUpdatePlayers);
     socket.off("hostIs", handleHostIs);
     socket.off("error");
   };
-}, [lobbyCode, currentUser]);
+}, [lobbyCode]);
 
+// 2️⃣ Join lobby once we have both lobbyCode and currentUser
+useEffect(() => {
+  if (!lobbyCode || !currentUser) return;
+  socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+}, [lobbyCode, currentUser]);
   // Toggle functions
   const toggleCrossedLocation = (id) => setCrossedLocations((prev) => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
   const toggleCrossedPlayer = (id) => setCrossedPlayers((prev) => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
