@@ -103,6 +103,8 @@ const SpyPlay = () => {
   useEffect(() => {
     if (!lobbyCode) return;
     setTimeout(() => logToScreen("✅ SpyPlay mounted with code:", lobbyCode), 50);
+    setLoading(false); 
+    
   }, [lobbyCode]);
 
   // Load persisted game if exists
