@@ -182,62 +182,48 @@ useEffect(() => {
 
 // 2️⃣ Join lobby once both lobbyCode and currentUser exist
   useEffect(() => {
-    if (!lobbyCode ) {
-      logToScreen("⏳ Waiting for lobbyCode and currentUser...", { lobbyCode, currentUser });
-      return;
+  if (!lobbyCode) return;
+
+  logToScreen("🚀 Joining lobby with user:", currentUser);
+
+  const handleUpdatePlayers = (updatedPlayers) => {
+    logToScreen("👥 updatePlayers received:", updatedPlayers);
+    setPlayers(updatedPlayers);
+
+    // If lobby is empty and we don't have a currentUser, fetch the host
+    if (updatedPlayers.length === 0 && !currentUser) {
+      logToScreen("⏳ Lobby empty, fetching host from server");
+      socket.emit("getHost", { code: lobbyCode });
     }
 
-    logToScreen("🚀 Joining lobby with user:", currentUser);
+    setLoading(false);
+  };
 
-    const handleUpdatePlayers = (updatedPlayers) => {
-      logToScreen("👥 updatePlayers received:", updatedPlayers);
-      setPlayers(updatedPlayers);
-      // if empty, fetch host
-      logToScreen(updatedPlayers.length)
-      if (updatedPlayers.length === 0) {
-        logToScreen("emit get host")
-        socket.emit("getHost", { code: lobbyCode });
-      }
-
-      setLoading(false);
-    };
-
-    const handleHostIs = ({ host }) => {
-      if (host && !localStorage.getItem("savedUser")) {
-        logToScreen("⭐ Using host from server as currentUser:", host);
-        const tempUser = { id: host.id, name: host.name };
-        localStorage.setItem("savedUser", JSON.stringify(tempUser));
-        setCurrentUser(tempUser);
-      } else if (!host && !localStorage.getItem("savedUser")) {
-        // only prompt if no host given
-        const name = prompt("Enter your player name:");
-        if (name) {
-          const tempUser = { id: Date.now().toString(), name };
-          localStorage.setItem("savedUser", JSON.stringify(tempUser));
-          setCurrentUser(tempUser);
-        }
-      }
-    };
-    logToScreen("right before updating players")
-    socket.on("updatePlayers", handleUpdatePlayers);
-    socket.on("hostIs", handleHostIs);
-    socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
-
-    if (socket.connected) {
-      socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
-    } else {
-      socket.on("connect", () => {
-        logToScreen("🔌 Socket connected, emitting joinLobby");
-        socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
-      });
+  const handleHostIs = ({ host }) => {
+    if (host) {
+      logToScreen("⭐ Setting currentUser to host:", host);
+      localStorage.setItem("savedUser", JSON.stringify(host));
+      setCurrentUser(host);
     }
+  };
 
-    return () => {
-      socket.off("updatePlayers", handleUpdatePlayers);
-      socket.off("hostIs", handleHostIs);
-      socket.off("error");
-    };
-  }, [lobbyCode, currentUser]);
+  socket.on("updatePlayers", handleUpdatePlayers);
+  socket.on("hostIs", handleHostIs);
+  socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
+
+  // Only emit joinLobby if we already have a currentUser
+  if (currentUser) {
+    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+  } else {
+    logToScreen("⏳ Waiting for currentUser before joinLobby");
+  }
+
+  return () => {
+    socket.off("updatePlayers", handleUpdatePlayers);
+    socket.off("hostIs", handleHostIs);
+    socket.off("error");
+  };
+}, [lobbyCode, currentUser]);
 
   // Toggle functions
   const toggleCrossedLocation = (id) => setCrossedLocations((prev) => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
