@@ -82,15 +82,20 @@ const SpyPlay = () => {
   const [deck, setDeck] = useState([]);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const { lobbyCode: paramCode } = useParams();
   const [gameStarted, setGameStarted] = useState(false);
   const [location, setLocation] = useState(null);
   const [roles, setRoles] = useState({});
   const [crossedPlayers, setCrossedPlayers] = useState([]);
   const [crossedLocations, setCrossedLocations] = useState([]);
   useEffect(() => {
+  if (paramCode) setLobbyCode(paramCode);
+}, [paramCode]);
+  useEffect(() => {
+    if (!lobbyCode) return;
   logToScreen("✅ SpyPlay mounted with code:", lobbyCode);
 }, [lobbyCode]);
+
   const toggleCrossedLocation = (id) => { //for crossing out locations
       setCrossedLocations((prev) =>
         prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
