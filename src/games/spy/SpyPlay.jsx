@@ -87,77 +87,25 @@ const SpyPlay = () => {
   }
 
   //Persist user
+
   const getPersistedUser = () => {
-    if (user?.id && user?.email) {
-      const loggedInUser = { id: user.id, name: user.email };
-      localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
-      return loggedInUser;
-    }
-    const saved = localStorage.getItem("savedUser");
-    if (saved) return JSON.parse(saved);
-
-    return null;
-  };
-  const [currentUser, setCurrentUser] = useState(() => {
-  const saved = localStorage.getItem("savedUser");
-  if (saved) return JSON.parse(saved);
-  return null;
-});
-
-// 2️⃣ Effect to sync with auth context when it becomes available
-useEffect(() => {
-  if (!currentUser && user?.id && user?.email) {
+  if (user?.id && user?.email) {
     const loggedInUser = { id: user.id, name: user.email };
     localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
-    setCurrentUser(loggedInUser);
-  }
-}, [user]);
-
-// 3️⃣ Effect to join lobby once both lobbyCode and currentUser exist
-useEffect(() => {
-  if (!lobbyCode || !currentUser) return;
-
-  logToScreen("🚀 Joining lobby immediately with user:", currentUser);
-
-  const handleUpdatePlayers = (updatedPlayers) => {
-    logToScreen("👥 updatePlayers received:", updatedPlayers);
-    setPlayers(updatedPlayers);
-    setLoading(false);
-  };
-
-  socket.on("updatePlayers", handleUpdatePlayers);
-  socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
-
-  // emit joinLobby immediately if socket is connected
-  if (socket.connected) {
-    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
-  } else {
-    socket.once("connect", () => {
-      logToScreen("🔌 Socket connected, emitting joinLobby");
-      socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
-    });
+    return loggedInUser;
   }
 
-  return () => {
-    socket.off("updatePlayers", handleUpdatePlayers);
-    socket.off("error");
-  };
-}, [lobbyCode, currentUser]);
-  // const handleNewUserJoin = (newUser) => {
-  // // Emit new user join first
-  // socket.emit("joinLobby", { code: lobbyCode, player: newUser });
+  const saved = localStorage.getItem("savedUser");
+  if (saved) return JSON.parse(saved);
 
-  // // Then also emit persisted user if exists
-  // if (currentUser) {
-  //   logToScreen("🚀 Also joining persisted user:", currentUser);
-  //   socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
-  // }
-
-  // Optionally set the new user as current for UI purposes
-//   setCurrentUser(newUser);
-// };
-
-//const [currentUser, setCurrentUser] = useState(() => getPersistedUser());
+  // ❗ Prompt for mobile if nothing exists
+  const name = prompt("Enter your player name:");
+  if (!name) return null; // still null if user cancels
+  const tempUser = { id: Date.now().toString(), name };
+  localStorage.setItem("savedUser", JSON.stringify(tempUser));
+  return tempUser;
+};
+  const [currentUser, setCurrentUser] = useState(getPersistedUser());
 
   // Lobby mounted log
   useEffect(() => {
@@ -246,10 +194,26 @@ useEffect(() => {
   const handleUpdatePlayers = (updatedPlayers) => {
     logToScreen("👥 updatePlayers received:", updatedPlayers);
     setPlayers(updatedPlayers);
+
+    // 👇 if lobby was empty, fetch the host identity
+    if (updatedPlayers.length === 0) {
+      socket.emit("getHost", { code: lobbyCode });
+    }
+
     setLoading(false);
   };
 
+  const handleHostIs = ({ host }) => {
+    if (host && !localStorage.getItem("savedUser")) {
+      logToScreen("⭐ Setting first player as host:", host);
+      const tempUser = { id: host.id, name: host.name };
+      localStorage.setItem("savedUser", JSON.stringify(tempUser));
+      setCurrentUser(tempUser);
+    }
+  };
+
   socket.on("updatePlayers", handleUpdatePlayers);
+  socket.on("hostIs", handleHostIs);
   socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
 
   if (socket.connected) {
@@ -265,6 +229,7 @@ useEffect(() => {
 
   return () => {
     socket.off("updatePlayers", handleUpdatePlayers);
+    socket.off("hostIs", handleHostIs);
     socket.off("error");
     clearTimeout(fallback);
   };
