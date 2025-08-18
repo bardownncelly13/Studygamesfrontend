@@ -75,14 +75,14 @@ const SpyPlay = () => {
   console.log(...args);
 }
 
-  const { lobbyCode, deckId } = useParams();
+  //const { lobbyCode } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-
   const [deck, setDeck] = useState([]);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const { lobbyCode: paramCode } = useParams();
+  const [lobbyCode, setLobbyCode] = useState(paramCode || null);
   const [gameStarted, setGameStarted] = useState(false);
   const [location, setLocation] = useState(null);
   const [roles, setRoles] = useState({});
