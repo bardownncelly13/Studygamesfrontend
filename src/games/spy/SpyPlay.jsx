@@ -165,25 +165,28 @@ useEffect(() => {
   if (!lobbyCode) return;
 
   const userToUse = currentUser || getPersistedUser();
-  if (!userToUse) {
-    console.log("Waiting for user to be ready...");
-    return;
-  }
+  if (!userToUse) return;
 
-  // Make sure currentUser state is set
   if (!currentUser) setCurrentUser(userToUse);
 
-  console.log("Joining lobby with user:", userToUse);
-  socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
-
+  // Subscribe first
   const handleUpdatePlayers = (updatedPlayers) => {
     console.log("Players updated:", updatedPlayers);
     setPlayers(updatedPlayers);
-    setLoading(false);
+    setLoading(false); // ✅ Stop loading once we get players
   };
 
   socket.on("updatePlayers", handleUpdatePlayers);
   socket.on("error", console.error);
+
+  // Emit after subscribing
+  if (socket.connected) {
+    socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
+  } else {
+    socket.on("connect", () => {
+      socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
+    });
+  }
 
   // Safety fallback: stop loading after 5s
   const fallback = setTimeout(() => setLoading(false), 5000);
