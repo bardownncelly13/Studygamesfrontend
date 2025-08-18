@@ -86,34 +86,31 @@ const SpyPlay = () => {
     console.log(...args);
   }
 
-  // Persist user
-  // const getPersistedUser = () => {
-  //   if (user?.id && user?.email) {
-  //     const loggedInUser = { id: user.id, name: user.email };
-  //     localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
-  //     return loggedInUser;
-  //   }
-  //   const saved = localStorage.getItem("savedUser");
-  //   if (saved) return JSON.parse(saved);
-  //   return null;
-  // };
+  //Persist user
   const getPersistedUser = () => {
-  if (user?.id && user?.email) {
-    const loggedInUser = { id: user.id, name: user.email };
-    localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
-    return loggedInUser;
+    if (user?.id && user?.email) {
+      const loggedInUser = { id: user.id, name: user.email };
+      localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
+      return loggedInUser;
+    }
+    const saved = localStorage.getItem("savedUser");
+    if (saved) return JSON.parse(saved);
+    return null;
+  };
+  const handleNewUserJoin = (newUser) => {
+  // Emit new user join first
+  socket.emit("joinLobby", { code: lobbyCode, player: newUser });
+
+  // Then also emit persisted user if exists
+  if (currentUser) {
+    logToScreen("🚀 Also joining persisted user:", currentUser);
+    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
   }
 
-  const saved = localStorage.getItem("savedUser");
-  if (saved) return JSON.parse(saved);
-
-  // ❗ Prompt for mobile if nothing exists
-  const name = prompt("Enter your player name:");
-  if (!name) return null; // still null if user cancels
-  const tempUser = { id: Date.now().toString(), name };
-  localStorage.setItem("savedUser", JSON.stringify(tempUser));
-  return tempUser;
+  // Optionally set the new user as current for UI purposes
+  setCurrentUser(newUser);
 };
+
   const [currentUser, setCurrentUser] = useState(getPersistedUser());
 
   // Lobby mounted log
@@ -279,6 +276,7 @@ useEffect(() => {
   if (loading) return <h3 className="text-white">Loading lobby...</h3>;
 
   return (
+
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 p-6 text-white">
       <button className="absolute top-4 left-4 z-[999] px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/50" onClick={handleLeaveLobby}>
         Back
@@ -294,7 +292,14 @@ useEffect(() => {
             </li>
           ))}
         </ul>
-
+          <div className="mb-4">
+  <input type="text" placeholder="Enter your name" id="newUserName" className="px-2 py-1 rounded"/>
+  <button onClick={() => {
+    const name = document.getElementById("newUserName").value.trim();
+    if (!name) return;
+    handleNewUserJoin({ id: Date.now().toString(), name });
+  }} className="ml-2 px-4 py-2 bg-blue-600 rounded text-white">Join</button>
+</div>
         {gameStarted ? (
           <div className="text-center mb-6">
             <h3 className="text-xl font-semibold mb-2">Your Role:</h3>
