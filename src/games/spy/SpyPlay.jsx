@@ -193,6 +193,7 @@ useEffect(() => {
       logToScreen("👥 updatePlayers received:", updatedPlayers);
       setPlayers(updatedPlayers);
       // if empty, fetch host
+      logToScreen(updatedPlayers.length)
       if (updatedPlayers.length === 0) {
         logToScreen("emit get host")
         socket.emit("getHost", { code: lobbyCode });
