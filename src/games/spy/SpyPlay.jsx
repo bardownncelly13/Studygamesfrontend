@@ -169,35 +169,28 @@ const SpyPlay = () => {
 
   // Join lobby & update players
 useEffect(() => {
-  if (!currentUser) {
-    const persisted = getPersistedUser();
-    if (persisted) {
-      logToScreen("📝 Setting currentUser from persisted storage:", persisted);
-      setCurrentUser(persisted);
-    } else {
-      logToScreen("⏳ No user in localStorage yet, waiting...");
-    }
-  }
-}, [currentUser]);
-
-// 2️⃣ Join lobby once both lobbyCode and currentUser exist
-useEffect(() => {
   if (!lobbyCode) return;
+
+  // If we already have a user, just join
+  if (currentUser) {
+    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+  } else {
+    // Request host immediately, since no user yet
+    logToScreen("📡 No currentUser, requesting host from server");
+    socket.emit("getHost", { code: lobbyCode });
+  }
 
   const handleUpdatePlayers = (updatedPlayers) => {
     setPlayers(updatedPlayers);
-    // If lobby empty and no currentUser, request host immediately
-    if (updatedPlayers.length === 0 && !currentUser) {
-      socket.emit("getHost", { code: lobbyCode });
-    }
     setLoading(false);
   };
 
   const handleHostIs = ({ host }) => {
     if (host) {
+      logToScreen("⭐ Received host from server:", host);
       localStorage.setItem("savedUser", JSON.stringify(host));
       setCurrentUser(host);
-      socket.emit("joinLobby", { code: lobbyCode, player: host }); // join immediately once we have host
+      socket.emit("joinLobby", { code: lobbyCode, player: host }); // join immediately
     }
   };
 
