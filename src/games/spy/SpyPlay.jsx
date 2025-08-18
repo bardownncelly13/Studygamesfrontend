@@ -95,23 +95,69 @@ const SpyPlay = () => {
     }
     const saved = localStorage.getItem("savedUser");
     if (saved) return JSON.parse(saved);
+
     return null;
   };
-  const handleNewUserJoin = (newUser) => {
-  // Emit new user join first
-  socket.emit("joinLobby", { code: lobbyCode, player: newUser });
+  const [currentUser, setCurrentUser] = useState(() => {
+  const saved = localStorage.getItem("savedUser");
+  if (saved) return JSON.parse(saved);
+  return null;
+});
 
-  // Then also emit persisted user if exists
-  if (currentUser) {
-    logToScreen("🚀 Also joining persisted user:", currentUser);
+// 2️⃣ Effect to sync with auth context when it becomes available
+useEffect(() => {
+  if (!currentUser && user?.id && user?.email) {
+    const loggedInUser = { id: user.id, name: user.email };
+    localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
+    setCurrentUser(loggedInUser);
+  }
+}, [user]);
+
+// 3️⃣ Effect to join lobby once both lobbyCode and currentUser exist
+useEffect(() => {
+  if (!lobbyCode || !currentUser) return;
+
+  logToScreen("🚀 Joining lobby immediately with user:", currentUser);
+
+  const handleUpdatePlayers = (updatedPlayers) => {
+    logToScreen("👥 updatePlayers received:", updatedPlayers);
+    setPlayers(updatedPlayers);
+    setLoading(false);
+  };
+
+  socket.on("updatePlayers", handleUpdatePlayers);
+  socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
+
+  // emit joinLobby immediately if socket is connected
+  if (socket.connected) {
     socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+  } else {
+    socket.once("connect", () => {
+      logToScreen("🔌 Socket connected, emitting joinLobby");
+      socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+    });
   }
 
-  // Optionally set the new user as current for UI purposes
-  setCurrentUser(newUser);
-};
+  return () => {
+    socket.off("updatePlayers", handleUpdatePlayers);
+    socket.off("error");
+  };
+}, [lobbyCode, currentUser]);
+  // const handleNewUserJoin = (newUser) => {
+  // // Emit new user join first
+  // socket.emit("joinLobby", { code: lobbyCode, player: newUser });
 
-  const [currentUser, setCurrentUser] = useState(getPersistedUser());
+  // // Then also emit persisted user if exists
+  // if (currentUser) {
+  //   logToScreen("🚀 Also joining persisted user:", currentUser);
+  //   socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+  // }
+
+  // Optionally set the new user as current for UI purposes
+//   setCurrentUser(newUser);
+// };
+
+//const [currentUser, setCurrentUser] = useState(() => getPersistedUser());
 
   // Lobby mounted log
   useEffect(() => {
@@ -276,7 +322,6 @@ useEffect(() => {
   if (loading) return <h3 className="text-white">Loading lobby...</h3>;
 
   return (
-
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 p-6 text-white">
       <button className="absolute top-4 left-4 z-[999] px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/50" onClick={handleLeaveLobby}>
         Back
@@ -292,14 +337,7 @@ useEffect(() => {
             </li>
           ))}
         </ul>
-          <div className="mb-4">
-  <input type="text" placeholder="Enter your name" id="newUserName" className="px-2 py-1 rounded"/>
-  <button onClick={() => {
-    const name = document.getElementById("newUserName").value.trim();
-    if (!name) return;
-    handleNewUserJoin({ id: Date.now().toString(), name });
-  }} className="ml-2 px-4 py-2 bg-blue-600 rounded text-white">Join</button>
-</div>
+
         {gameStarted ? (
           <div className="text-center mb-6">
             <h3 className="text-xl font-semibold mb-2">Your Role:</h3>
