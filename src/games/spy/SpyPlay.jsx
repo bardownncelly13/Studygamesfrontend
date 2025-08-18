@@ -55,30 +55,7 @@ const SpyPlay = () => {
   console.log("✅ SpyPlay mounted with code:", lobbyCode);
   document.body.append("✅ SpyPlay mounted\n");
 }, [lobbyCode]);
-useEffect(() => {
-  if (deck.length === 0) {
-    console.log("No deck from server, using default deck");
-    setDeck(defaultDeck);
-  }
-}, [deck]);
-useEffect(() => {
-  // Restore saved lobby data if available
-  const saved = localStorage.getItem(`spyGame_${lobbyCode}`);
-  if (saved) {
-    const { location, roles, gameStarted, crossedPlayers, crossedLocations, deck: savedDeck } =
-      JSON.parse(saved);
-    setLocation(location);
-    setRoles(roles);
-    setGameStarted(gameStarted);
-    setCrossedPlayers(crossedPlayers || []);
-    setCrossedLocations(crossedLocations || []);
-    if (savedDeck) setDeck(savedDeck);
-  }
 
-  // Ensure currentUser is set
-  const userFromStorage = getPersistedUser();
-  if (userFromStorage) setCurrentUser(userFromStorage);
-}, [lobbyCode]);
 if (!currentUser || deck.length === 0 || loading) {
   return (
     <div className="h-screen flex items-center justify-center text-white text-lg">
@@ -266,6 +243,30 @@ const handleLeaveLobby = () => {
   }
   navigate("/"); 
 };
+useEffect(() => {
+  if (deck.length === 0) {
+    console.log("No deck from server, using default deck");
+    setDeck(defaultDeck);
+  }
+}, [deck]);
+useEffect(() => {
+  // Restore saved lobby data if available
+  const saved = localStorage.getItem(`spyGame_${lobbyCode}`);
+  if (saved) {
+    const { location, roles, gameStarted, crossedPlayers, crossedLocations, deck: savedDeck } =
+      JSON.parse(saved);
+    setLocation(location);
+    setRoles(roles);
+    setGameStarted(gameStarted);
+    setCrossedPlayers(crossedPlayers || []);
+    setCrossedLocations(crossedLocations || []);
+    if (savedDeck) setDeck(savedDeck);
+  }
+
+  // Ensure currentUser is set
+  const userFromStorage = getPersistedUser();
+  if (userFromStorage) setCurrentUser(userFromStorage);
+}, [lobbyCode]);
   return (
   <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 p-6 text-white">
     
