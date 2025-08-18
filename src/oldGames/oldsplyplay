@@ -37,86 +37,123 @@ const defaultDeck = [
 const socket = io("https://studygames-backend-80244932095.us-central1.run.app");
 
 const SpyPlay = () => {
-  const { lobbyCode, deckId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { lobbyCode: paramCode } = useParams();
 
+  // State
+  const [lobbyCode, setLobbyCode] = useState(paramCode || null);
   const [deck, setDeck] = useState([]);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [gameStarted, setGameStarted] = useState(false);
   const [location, setLocation] = useState(null);
   const [roles, setRoles] = useState({});
   const [crossedPlayers, setCrossedPlayers] = useState([]);
   const [crossedLocations, setCrossedLocations] = useState([]);
-  const toggleCrossedLocation = (id) => { //for crossing out locations
-      setCrossedLocations((prev) =>
-        prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-      );
-    };
-  const toggleCrossedPlayer = (id) => { //for crossing out players 
-    setCrossedPlayers((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
-  };
-const getPersistedUser = () => {
-  // If a user is logged in, always use them
+
+  // Initialize lobbyCode safely
+  useEffect(() => {
+    if (paramCode && paramCode !== lobbyCode) setLobbyCode(paramCode);
+  }, [paramCode, lobbyCode]);
+
+  // Floating log panel
+  function logToScreen(...args) {
+    const msg = args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ");
+    let debugPanel = document.getElementById("debug-panel");
+    if (!debugPanel) {
+      debugPanel = document.createElement("div");
+      debugPanel.id = "debug-panel";
+      debugPanel.style.position = "fixed";
+      debugPanel.style.top = "10px";
+      debugPanel.style.right = "10px";
+      debugPanel.style.maxHeight = "40vh";
+      debugPanel.style.width = "90%";
+      debugPanel.style.overflowY = "auto";
+      debugPanel.style.backgroundColor = "white";
+      debugPanel.style.color = "black";
+      debugPanel.style.padding = "8px";
+      debugPanel.style.fontSize = "12px";
+      debugPanel.style.border = "1px solid black";
+      debugPanel.style.zIndex = 9999;
+      debugPanel.style.fontFamily = "monospace";
+      document.body.appendChild(debugPanel);
+    }
+    const el = document.createElement("div");
+    el.textContent = msg;
+    debugPanel.appendChild(el);
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+    console.log(...args);
+  }
+
+  //Persist user
+
+  const getPersistedUser = () => {
   if (user?.id && user?.email) {
     const loggedInUser = { id: user.id, name: user.email };
     localStorage.setItem("savedUser", JSON.stringify(loggedInUser));
     return loggedInUser;
   }
 
-  // Otherwise, just return the saved user from localStorage (entered name)
   const saved = localStorage.getItem("savedUser");
   if (saved) return JSON.parse(saved);
 
-  // If nothing is saved, return null (no user yet)
-  return null;
+  // ❗ Prompt for mobile if nothing exists
+  const name = prompt("Enter your player name:");
+  if (!name) return null; // still null if user cancels
+  const tempUser = { id: Date.now().toString(), name };
+  localStorage.setItem("savedUser", JSON.stringify(tempUser));
+  return tempUser;
 };
-
-
   const [currentUser, setCurrentUser] = useState(getPersistedUser());
-  useEffect(() => {
-    const handleLobbyDeck = ({ deck: serverDeck }) => {
-      console.log("Received deck from server:", serverDeck);
-      setDeck(serverDeck);
-    };
 
-    socket.on("lobbyDeck", handleLobbyDeck);
-
-    return () => {
-      socket.off("lobbyDeck", handleLobbyDeck);
-    };
-  }, []);
+  // Lobby mounted log
   useEffect(() => {
-    if (gameStarted) {
-      localStorage.setItem(
-        `spyGame_${lobbyCode}`,
-        JSON.stringify({
-          location,
-          roles,
-          gameStarted,
-          crossedPlayers,
-          crossedLocations,
-        })
-      );
+    if (!lobbyCode) return;
+    setTimeout(() => logToScreen("✅ SpyPlay mounted with code:", lobbyCode), 50);
+    setLoading(false);
+  }, [lobbyCode]);
+
+  // Load persisted game if exists
+  useEffect(() => {
+    if (!lobbyCode) return;
+    const saved = localStorage.getItem(`spyGame_${lobbyCode}`);
+    if (saved) {
+      const { location, roles, gameStarted, crossedPlayers, crossedLocations } = JSON.parse(saved);
+      setLocation(location);
+      setRoles(roles);
+      setGameStarted(gameStarted);
+      setCrossedPlayers(crossedPlayers || []);
+      setCrossedLocations(crossedLocations || []);
     }
+  }, [lobbyCode]);
+
+  // Save game state
+  useEffect(() => {
+    if (!lobbyCode || !gameStarted) return;
+    localStorage.setItem(
+      `spyGame_${lobbyCode}`,
+      JSON.stringify({ location, roles, gameStarted, crossedPlayers, crossedLocations })
+    );
   }, [gameStarted, location, roles, crossedPlayers, crossedLocations, lobbyCode]);
 
-  // Socket listeners
+  // Socket listeners: lobby deck
   useEffect(() => {
-  const handleGameStarted = ({ location, roles, deck: serverDeck }) => {
-    console.log("Game started!", { location, roles, serverDeck });
-    setDeck(serverDeck); // ✅ set it from the server
-    setGameStarted(true);
-    setLocation(location);
-    setRoles(roles);
-  };
+    const handleLobbyDeck = ({ deck: serverDeck }) => setDeck(serverDeck);
+    socket.on("lobbyDeck", handleLobbyDeck);
+    return () => socket.off("lobbyDeck", handleLobbyDeck);
+  }, []);
 
+  // Socket listeners: game start/end
+  useEffect(() => {
+    if (!lobbyCode) return;
+    const handleGameStarted = ({ location, roles, deck: serverDeck }) => {
+      setDeck(serverDeck);
+      setGameStarted(true);
+      setLocation(location);
+      setRoles(roles);
+    };
     const handleGameEnded = () => {
-      console.log("Game ended!");
       setGameStarted(false);
       setLocation(null);
       setRoles({});
@@ -124,10 +161,8 @@ const getPersistedUser = () => {
       setCrossedLocations([]);
       localStorage.removeItem(`spyGame_${lobbyCode}`);
     };
-
     socket.on("gameStarted", handleGameStarted);
     socket.on("gameEnded", handleGameEnded);
-
     return () => {
       socket.off("gameStarted", handleGameStarted);
       socket.off("gameEnded", handleGameEnded);
@@ -135,59 +170,88 @@ const getPersistedUser = () => {
   }, [lobbyCode]);
 
   // Join lobby & update players
-  useEffect(() => {
-    if (!lobbyCode) return;
-
-    const saved = localStorage.getItem(`spyGame_${lobbyCode}`);
-    if (saved) {
-      const { location, roles, gameStarted, crossedPlayers, crossedLocations } =
-        JSON.parse(saved);
-      setLocation(location);
-      setRoles(roles);
-      setGameStarted(gameStarted);
-      setCrossedPlayers(crossedPlayers || []);
-      setCrossedLocations(crossedLocations || []);
+useEffect(() => {
+  if (!currentUser) {
+    const persisted = getPersistedUser();
+    if (persisted) {
+      logToScreen("📝 Setting currentUser from persisted storage:", persisted);
+      setCurrentUser(persisted);
+    } else {
+      logToScreen("⏳ No user in localStorage yet, waiting...");
     }
+  }
+}, [currentUser]);
 
-    const currentPlayer = { id: currentUser.id, name: currentUser.name };
-    socket.emit("joinLobby", { code: lobbyCode, player: currentPlayer });
+// 2️⃣ Join lobby once both lobbyCode and currentUser exist
+useEffect(() => {
+  if (!lobbyCode || !currentUser) {
+    logToScreen("⏳ Waiting for lobbyCode and currentUser...", { lobbyCode, currentUser });
+    return;
+  }
+
+  logToScreen("🚀 Joining lobby with user:", currentUser);
 
   const handleUpdatePlayers = (updatedPlayers) => {
-      console.log("Players updated:", updatedPlayers);
-      setPlayers(updatedPlayers);
-      setLoading(false);
-    };
+    logToScreen("👥 updatePlayers received:", updatedPlayers);
+    setPlayers(updatedPlayers);
 
-    socket.on("updatePlayers", handleUpdatePlayers);
-    socket.on("error", console.error);
+    // 👇 if lobby was empty, fetch the host identity
+    if (updatedPlayers.length === 0) {
+      socket.emit("getHost", { code: lobbyCode });
+    }
 
-    return () => {
-      socket.off("updatePlayers", handleUpdatePlayers);
-      socket.off("error", console.error);
-    };
-  }, [lobbyCode, currentUser.id]);
+    setLoading(false);
+  };
 
+  const handleHostIs = ({ host }) => {
+    if (host && !localStorage.getItem("savedUser")) {
+      logToScreen("⭐ Setting first player as host:", host);
+      const tempUser = { id: host.id, name: host.name };
+      localStorage.setItem("savedUser", JSON.stringify(tempUser));
+      setCurrentUser(tempUser);
+    }
+  };
+
+  socket.on("updatePlayers", handleUpdatePlayers);
+  socket.on("hostIs", handleHostIs);
+  socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
+
+  if (socket.connected) {
+    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+  } else {
+    socket.on("connect", () => {
+      logToScreen("🔌 Socket connected, emitting joinLobby");
+      socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+    });
+  }
+
+  const fallback = setTimeout(() => setLoading(false), 5000);
+
+  return () => {
+    socket.off("updatePlayers", handleUpdatePlayers);
+    socket.off("hostIs", handleHostIs);
+    socket.off("error");
+    clearTimeout(fallback);
+  };
+}, [lobbyCode, currentUser]);
+
+
+  // Toggle functions
+  const toggleCrossedLocation = (id) => setCrossedLocations((prev) => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+  const toggleCrossedPlayer = (id) => setCrossedPlayers((prev) => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+
+  // Start/end game
   const startGame = () => {
     if (players.length < MIN_PLAYERS) return;
     if (!deck || deck.length === 0) {
       socket.emit("requestLobbyDeck", { code: lobbyCode });
-      return; // wait for serverDeck event to arrive
+      return;
     }
-    console.log(deck)
     const chosenLocation = deck[Math.floor(Math.random() * deck.length)];
     const spyIndex = Math.floor(Math.random() * players.length);
-    console.log(chosenLocation)
     const newRoles = {};
     players.forEach((player, idx) => {
       newRoles[player.id] = idx === spyIndex ? "Spy" : "Not the Spy";
-    });
-
-    console.log("Starting game:", { chosenLocation, newRoles });
-    console.log(deck)
-    socket.emit("startGameSpy", {
-      lobbyCode,
-      location: chosenLocation.prompt,
-      roles: newRoles,
     });
 
     setGameStarted(true);
@@ -195,124 +259,84 @@ const getPersistedUser = () => {
     setRoles(newRoles);
     setCrossedPlayers([]);
     setCrossedLocations([]);
+    localStorage.setItem(`spyGame_${lobbyCode}`, JSON.stringify({ location: chosenLocation.prompt, roles: newRoles, gameStarted: true }));
 
-    localStorage.setItem(
-      `spyGame_${lobbyCode}`,
-      JSON.stringify({ location: chosenLocation.prompt, roles: newRoles, gameStarted: true })
-    );
+    socket.emit("startGameSpy", { lobbyCode, location: chosenLocation.prompt, roles: newRoles });
   };
 
-
-const handleEndGame = () => {
-    console.log("Ending game for lobby:", lobbyCode);
+  const handleEndGame = () => {
     socket.emit("endGameSpy", { code: lobbyCode });
-
     setGameStarted(false);
     setLocation(null);
     setRoles({});
     setCrossedPlayers([]);
     setCrossedLocations([]);
-
     localStorage.removeItem(`spyGame_${lobbyCode}`);
   };
 
+  const handleLeaveLobby = () => {
+    if (socket && lobbyCode && currentUser?.id) {
+      socket.emit("leaveLobby", { code: lobbyCode, playerId: currentUser.id });
+      setPlayers((prev) => prev.filter((p) => p.id !== currentUser.id));
+    }
+    navigate("/");
+  };
+
+  // Render placeholders first
+  if (!lobbyCode) return <p className="text-white">Joining lobby…</p>;
   if (loading) return <h3 className="text-white">Loading lobby...</h3>;
-const handleLeaveLobby = () => {
-  if (socket && lobbyCode && currentUser?.id) {
-    socket.emit("leaveLobby", { code: lobbyCode, playerId: currentUser.id });
-    setPlayers((prev) => prev.filter((p) => p.id !== currentUser.id));
-  }
-  navigate("/"); 
-};
+
   return (
-  <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 p-6 text-white">
-    
-    {/* Back Button */}
-    <button
-      className="absolute top-4 left-4 z-[999] px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/50"
-      onClick={handleLeaveLobby}
-    >
-      Back
-    </button>
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 p-6 text-white">
+      <button className="absolute top-4 left-4 z-[999] px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/50" onClick={handleLeaveLobby}>
+        Back
+      </button>
 
-    {/* Lobby Panel */}
-    <div className="bg-gray-900/80 backdrop-blur-md rounded-2xl p-8 w-full max-w-2xl shadow-2xl border border-gray-700 z-10">
-      <h2 className="text-3xl font-bold text-yellow-400 text-center mb-4 drop-shadow-lg">
-        Lobby Code: {lobbyCode}
-      </h2>
+      <div className="bg-gray-900/80 backdrop-blur-md rounded-2xl p-8 w-full max-w-2xl shadow-2xl border border-gray-700 z-10">
+        <h2 className="text-3xl font-bold text-yellow-400 text-center mb-4 drop-shadow-lg">Lobby Code: {lobbyCode}</h2>
+        <h3 className="text-xl font-semibold mb-2">Players ({players.length}):</h3>
+        <ul className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+          {players.map((p) => (
+            <li key={p.id} onClick={() => toggleCrossedPlayer(p.id)} className={`cursor-pointer px-4 py-2 rounded-lg text-center border ${crossedPlayers.includes(p.id) ? "line-through bg-red-700/50 border-red-500" : "bg-gray-800/60 border-gray-600 hover:bg-gray-700/70"} transition-all duration-200`}>
+              {p.name}
+            </li>
+          ))}
+        </ul>
 
-      <h3 className="text-xl font-semibold mb-2">Players ({players.length}):</h3>
-      <ul className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        {players.map((p) => (
-          <li
-            key={p.id}
-            onClick={() => toggleCrossedPlayer(p.id)}
-            className={`cursor-pointer px-4 py-2 rounded-lg text-center border ${
-              crossedPlayers.includes(p.id)
-                ? "line-through bg-red-700/50 border-red-500"
-                : "bg-gray-800/60 border-gray-600 hover:bg-gray-700/70"
-            } transition-all duration-200`}
-          >
-            {p.name}
-          </li>
-        ))}
-      </ul>
+        {gameStarted ? (
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-semibold mb-2">Your Role:</h3>
+            <p className="text-lg">{roles[currentUser.id] === "Spy" ? "You are the Spy! Location unknown." : `NOT the Spy: Location: ${location}`}</p>
+          </div>
+        ) : (
+          <div className="flex justify-center mb-6">
+            <button className="px-6 py-3 rounded-full text-lg font-semibold bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/50" onClick={startGame}>Start Game</button>
+          </div>
+        )}
 
-      {gameStarted ? (
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-semibold mb-2">Your Role:</h3>
-          <p className="text-lg">
-            {roles[currentUser.id] === "Spy"
-              ? "You are the Spy! Location unknown."
-              : `NOT the Spy: Location: ${location}`}
-          </p>
-        </div>
-      ) : (
-        <div className="flex justify-center mb-6">
-          <button
-            className="px-6 py-3 rounded-full text-lg font-semibold bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/50"
-            onClick={startGame}
-          >
-            Start Game
-          </button>
-        </div>
-      )}
+        {gameStarted && (
+          <div className="flex justify-center mb-6">
+            <button className="px-6 py-3 rounded-full text-lg font-semibold bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/50" onClick={handleEndGame}>
+              End Game
+            </button>
+          </div>
+        )}
 
-      {gameStarted &&(
-        <div className="flex justify-center mb-6">
-          <button
-            className="px-6 py-3 rounded-full text-lg font-semibold bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/50"
-            onClick={handleEndGame}
-          >
-            End Game
-          </button>
-        </div>
-      )}
-
-      {gameStarted && (
-        <>
-          <h3 className="text-xl font-semibold mb-2">Available Locations:</h3>
-          <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {deck.map((card) => (
-              <li
-                key={card.id}
-                onClick={() => toggleCrossedLocation(card.id)}
-                className={`cursor-pointer px-4 py-2 rounded-lg text-center border ${
-                  crossedLocations.includes(card.id)
-                    ? "line-through bg-red-700/50 border-red-500"
-                    : "bg-gray-800/60 border-gray-600 hover:bg-gray-700/70"
-                } transition-all duration-200`}
-              >
-                {card.prompt}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+        {gameStarted && (
+          <>
+            <h3 className="text-xl font-semibold mb-2">Available Locations:</h3>
+            <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {deck.map((card) => (
+                <li key={card.id} onClick={() => toggleCrossedLocation(card.id)} className={`cursor-pointer px-4 py-2 rounded-lg text-center border ${crossedLocations.includes(card.id) ? "line-through bg-red-700/50 border-red-500" : "bg-gray-800/60 border-gray-600 hover:bg-gray-700/70"} transition-all duration-200`}>
+                  {card.prompt}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
-
+  );
 };
 
 export default SpyPlay;
