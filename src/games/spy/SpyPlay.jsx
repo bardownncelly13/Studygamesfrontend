@@ -182,7 +182,7 @@ useEffect(() => {
 
 // 2️⃣ Join lobby once both lobbyCode and currentUser exist
   useEffect(() => {
-    if (!lobbyCode || !currentUser) {
+    if (!lobbyCode ) {
       logToScreen("⏳ Waiting for lobbyCode and currentUser...", { lobbyCode, currentUser });
       return;
     }
@@ -192,9 +192,9 @@ useEffect(() => {
     const handleUpdatePlayers = (updatedPlayers) => {
       logToScreen("👥 updatePlayers received:", updatedPlayers);
       setPlayers(updatedPlayers);
-
       // if empty, fetch host
       if (updatedPlayers.length === 0) {
+        logToScreen("emit get host")
         socket.emit("getHost", { code: lobbyCode });
       }
 
