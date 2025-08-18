@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import supabase from "../../databaseClient";
 import { useAuth } from "../../context/Authcontext";
 import { useParams, useNavigate } from "react-router-dom";
+import socket from "../../socket"
 import { io } from "socket.io-client";
 
 const MIN_PLAYERS = 1;
@@ -34,7 +35,7 @@ const defaultDeck = [
   { id: 25, prompt: "Police Station" },
 ];
 
-const socket = io("https://studygames-backend-80244932095.us-central1.run.app");
+
 
 const SpyPlay = () => {
   const { user } = useAuth();
