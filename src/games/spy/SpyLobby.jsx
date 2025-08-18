@@ -140,26 +140,44 @@ function logToScreen(...args) {
       return String(a);
     }
   }).join(" ");
-  
+
+  // Floating debug panel
+  let debugPanel = document.getElementById("debug-panel");
+  if (!debugPanel) {
+    debugPanel = document.createElement("div");
+    debugPanel.id = "debug-panel";
+    debugPanel.style.position = "fixed";
+    debugPanel.style.top = "10px";
+    debugPanel.style.right = "10px";
+    debugPanel.style.maxHeight = "40vh";
+    debugPanel.style.width = "90%";
+    debugPanel.style.overflowY = "auto";
+    debugPanel.style.backgroundColor = "white";
+    debugPanel.style.color = "black";
+    debugPanel.style.padding = "8px";
+    debugPanel.style.fontSize = "12px";
+    debugPanel.style.border = "1px solid black";
+    debugPanel.style.zIndex = 9999;
+    debugPanel.style.fontFamily = "monospace";
+    document.body.appendChild(debugPanel);
+  }
+
   const el = document.createElement("div");
   el.textContent = msg;
-  el.style.fontSize = "14px";
-  el.style.color = "white";   
-  el.style.padding = "2px";
-  el.style.borderBottom = "1px solid #ccc";
-  document.body.appendChild(el);
+  debugPanel.appendChild(el);
+  debugPanel.scrollTop = debugPanel.scrollHeight;
 
   console.log(...args);
 }
 
 // Create lobby (host)
 const handleCreateLobby = async () => {
+  logToScreen("🏁 handleCreateLobby called");
   if (!playerName.trim()) {
     logToScreen("❌ Player name missing, cannot create lobby");
     return;
   }
 
-  // Ensure socket is connected
   if (!socket.connected) {
     logToScreen("⏳ Waiting for socket to connect...");
     await new Promise(resolve => socket.once("connect", resolve));
@@ -173,18 +191,12 @@ const handleCreateLobby = async () => {
   setIsHost(true);
 
   logToScreen("🚀 Emitting createLobby with code:", code);
+  socket.emit("createLobby", { code, host: { id: userId, name: playerName }, deck: deck.cards });
 
-  socket.emit("createLobby", { 
-    code, 
-    host: { id: userId, name: playerName }, 
-    deck: deck.cards 
-  });
-
-  // Timeout fallback in case event never comes
   const timeout = setTimeout(() => {
     logToScreen("⚠️ Timed out waiting for lobbyCreated event!");
     setLoading(false);
-  }, 5000);
+  }, 7000);
 
   socket.once("lobbyCreated", ({ code: createdCode, players, deck }) => {
     clearTimeout(timeout);
@@ -195,40 +207,66 @@ const handleCreateLobby = async () => {
     setLoading(false);
     setLobbyCode(createdCode);
     setTimeout(() => {
+      logToScreen("➡️ Navigating to lobby page:", `/lobby/${createdCode}`);
       navigate(`/lobby/${createdCode}`);
     }, 1);
   });
 };
 
   // Join lobby (non-host)
-  const handleJoinLobby = () => {
+//   const handleJoinLobby = () => {
   
+//   if (!socket || !lobbyCode || !playerName.trim()) {
+//     alert("Please enter a lobby code and your name.");
+//     return;
+//   }
+
+//   setLoading(true);
+
+//   const player = { id: userId, name: playerName };
+//   localStorage.setItem("savedUser", JSON.stringify(player)); // persist name
+  
+//   console.log("Joining lobby with code:", lobbyCode);
+//   socket.emit("joinLobby", { code: lobbyCode, player });
+
+//   // Use once instead of on
+//   socket.once("updatePlayers", (players) => {
+//     console.log("Players updated in lobby:", players);
+//     setLoading(false);
+//     navigate(`/lobby/${lobbyCode}`);
+//   });
+//   socket.once("JoinError", (msg) => {
+//       console.error("Join error:", msg);
+//       alert("Invalid Lobby Code")
+//       setLoading(false);
+//   });
+// };
+const handleJoinLobby = () => {
+  logToScreen("🏁 handleJoinLobby called");
   if (!socket || !lobbyCode || !playerName.trim()) {
     alert("Please enter a lobby code and your name.");
     return;
   }
 
   setLoading(true);
-
   const player = { id: userId, name: playerName };
-  localStorage.setItem("savedUser", JSON.stringify(player)); // persist name
+  localStorage.setItem("savedUser", JSON.stringify(player));
   
-  console.log("Joining lobby with code:", lobbyCode);
+  logToScreen("🚪 Joining lobby with code:", lobbyCode);
   socket.emit("joinLobby", { code: lobbyCode, player });
 
-  // Use once instead of on
   socket.once("updatePlayers", (players) => {
-    console.log("Players updated in lobby:", players);
+    logToScreen("✅ Players updated in lobby:", players);
     setLoading(false);
     navigate(`/lobby/${lobbyCode}`);
   });
+
   socket.once("JoinError", (msg) => {
-      console.error("Join error:", msg);
-      alert("Invalid Lobby Code")
-      setLoading(false);
+    logToScreen("❌ Join error:", msg);
+    alert("Invalid Lobby Code");
+    setLoading(false);
   });
 };
-
   if (!isConnected) {
   return <div className="h-screen flex items-center justify-center text-white">Connecting...</div>;
   }
