@@ -194,7 +194,9 @@ const handleCreateLobby = async () => {
 
     setLoading(false);
     setLobbyCode(createdCode);
-    navigate(`/lobby/${lobbyCode}`);
+    setTimeout(() => {
+      navigate(`/lobby/${createdCode}`);
+    }, 1);
   });
 };
 

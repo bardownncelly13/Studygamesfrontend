@@ -37,6 +37,7 @@ const defaultDeck = [
 const socket = io("https://studygames-backend-80244932095.us-central1.run.app");
 
 const SpyPlay = () => {
+  
   const { lobbyCode, deckId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -50,6 +51,10 @@ const SpyPlay = () => {
   const [roles, setRoles] = useState({});
   const [crossedPlayers, setCrossedPlayers] = useState([]);
   const [crossedLocations, setCrossedLocations] = useState([]);
+  useEffect(() => {
+  console.log("✅ SpyPlay mounted with code:", lobbyCode);
+  document.body.append("✅ SpyPlay mounted\n");
+}, [lobbyCode]);
   const toggleCrossedLocation = (id) => { //for crossing out locations
       setCrossedLocations((prev) =>
         prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
