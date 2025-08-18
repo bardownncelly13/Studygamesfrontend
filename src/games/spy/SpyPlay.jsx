@@ -104,7 +104,7 @@ useEffect(() => {
   // log after lobbyCode exists
   setTimeout(() => logToScreen("✅ SpyPlay mounted with code:", lobbyCode), 50);
 }, [lobbyCode]);
-
+if (!lobbyCode) return <p className="text-white">Joining lobby…</p>;
   const toggleCrossedLocation = (id) => { //for crossing out locations
       setCrossedLocations((prev) =>
         prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
