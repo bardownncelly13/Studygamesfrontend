@@ -218,7 +218,7 @@ useEffect(() => {
         }
       }
     };
-
+    logToScreen("right before updating players")
     socket.on("updatePlayers", handleUpdatePlayers);
     socket.on("hostIs", handleHostIs);
     socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
