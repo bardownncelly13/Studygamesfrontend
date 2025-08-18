@@ -161,24 +161,39 @@ const SpyPlay = () => {
   }, [lobbyCode]);
 
   // Join lobby & update players
-  useEffect(() => {
-    if (!lobbyCode || !currentUser) return;
+useEffect(() => {
+  if (!lobbyCode) return;
 
-    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
+  const userToUse = currentUser || getPersistedUser();
+  if (!userToUse) {
+    console.log("Waiting for user to be ready...");
+    return;
+  }
 
-    const handleUpdatePlayers = (updatedPlayers) => {
-      setPlayers(updatedPlayers);
-      setLoading(false);
-    };
+  // Make sure currentUser state is set
+  if (!currentUser) setCurrentUser(userToUse);
 
-    socket.on("updatePlayers", handleUpdatePlayers);
-    socket.on("error", console.error);
+  console.log("Joining lobby with user:", userToUse);
+  socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
 
-    return () => {
-      socket.off("updatePlayers", handleUpdatePlayers);
-      socket.off("error", console.error);
-    };
-  }, [lobbyCode, currentUser]);
+  const handleUpdatePlayers = (updatedPlayers) => {
+    console.log("Players updated:", updatedPlayers);
+    setPlayers(updatedPlayers);
+    setLoading(false);
+  };
+
+  socket.on("updatePlayers", handleUpdatePlayers);
+  socket.on("error", console.error);
+
+  // Safety fallback: stop loading after 5s
+  const fallback = setTimeout(() => setLoading(false), 5000);
+
+  return () => {
+    socket.off("updatePlayers", handleUpdatePlayers);
+    socket.off("error", console.error);
+    clearTimeout(fallback);
+  };
+}, [lobbyCode, currentUser]);
 
   // Toggle functions
   const toggleCrossedLocation = (id) => setCrossedLocations((prev) => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
