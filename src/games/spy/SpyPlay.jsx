@@ -163,28 +163,26 @@ const SpyPlay = () => {
 
   // Join lobby & update players
 useEffect(() => {
-  logToScreen("💡 Lobby effect triggered");
-
-  if (!lobbyCode) {
-    logToScreen("⏳ No lobbyCode yet, waiting...");
-    return;
-  }
-
-  const userToUse = currentUser || getPersistedUser();
-  if (!userToUse) {
-    logToScreen("⏳ currentUser not ready, waiting...");
-    return;
-  }
-
   if (!currentUser) {
-    logToScreen("📝 Setting currentUser state from persisted user:", userToUse);
-    setCurrentUser(userToUse);
+    const persisted = getPersistedUser();
+    if (persisted) {
+      logToScreen("📝 Setting currentUser from persisted storage:", persisted);
+      setCurrentUser(persisted);
+    } else {
+      logToScreen("⏳ No user in localStorage yet, waiting...");
+    }
+  }
+}, [currentUser]);
+
+// 2️⃣ Join lobby once both lobbyCode and currentUser exist
+useEffect(() => {
+  if (!lobbyCode || !currentUser) {
+    logToScreen("⏳ Waiting for lobbyCode and currentUser...", { lobbyCode, currentUser });
+    return;
   }
 
-  logToScreen("🚀 Attempting to join lobby with user:", userToUse);
-  logToScreen("🔌 Socket connected?", socket.connected);
+  logToScreen("🚀 Joining lobby with user:", currentUser);
 
-  // Subscribe before emitting
   const handleUpdatePlayers = (updatedPlayers) => {
     logToScreen("👥 updatePlayers received:", updatedPlayers);
     setPlayers(updatedPlayers);
@@ -194,26 +192,18 @@ useEffect(() => {
   socket.on("updatePlayers", handleUpdatePlayers);
   socket.on("error", (err) => logToScreen("⚠️ Socket error:", err));
 
-  // Emit joinLobby after subscribing
   if (socket.connected) {
-    logToScreen("📤 Emitting joinLobby immediately");
-    socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
+    socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
   } else {
-    logToScreen("⏳ Socket not connected, waiting for connect event...");
     socket.on("connect", () => {
       logToScreen("🔌 Socket connected, emitting joinLobby");
-      socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
+      socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
     });
   }
 
-  // Safety fallback: stop loading after 5s
-  const fallback = setTimeout(() => {
-    logToScreen("⏱ Fallback triggered, clearing loading state");
-    setLoading(false);
-  }, 5000);
+  const fallback = setTimeout(() => setLoading(false), 5000);
 
   return () => {
-    logToScreen("🧹 Cleaning up lobby effect");
     socket.off("updatePlayers", handleUpdatePlayers);
     socket.off("error");
     clearTimeout(fallback);
