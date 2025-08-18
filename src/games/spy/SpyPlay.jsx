@@ -103,8 +103,7 @@ const SpyPlay = () => {
   useEffect(() => {
     if (!lobbyCode) return;
     setTimeout(() => logToScreen("✅ SpyPlay mounted with code:", lobbyCode), 50);
-    setLoading(false); 
-    
+    setLoading(false);
   }, [lobbyCode]);
 
   // Load persisted game if exists
@@ -167,28 +166,25 @@ useEffect(() => {
   if (!lobbyCode) return;
 
   const userToUse = currentUser || getPersistedUser();
-  if (!userToUse) return;
+  if (!userToUse) {
+    console.log("Waiting for user to be ready...");
+    return;
+  }
 
+  // Make sure currentUser state is set
   if (!currentUser) setCurrentUser(userToUse);
 
-  // Subscribe first
+  console.log("Joining lobby with user:", userToUse);
+  socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
+
   const handleUpdatePlayers = (updatedPlayers) => {
     console.log("Players updated:", updatedPlayers);
     setPlayers(updatedPlayers);
-    setLoading(false); // ✅ Stop loading once we get players
+    setLoading(false);
   };
 
   socket.on("updatePlayers", handleUpdatePlayers);
   socket.on("error", console.error);
-
-  // Emit after subscribing
-  if (socket.connected) {
-    socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
-  } else {
-    socket.on("connect", () => {
-      socket.emit("joinLobby", { code: lobbyCode, player: userToUse });
-    });
-  }
 
   // Safety fallback: stop loading after 5s
   const fallback = setTimeout(() => setLoading(false), 5000);
