@@ -101,7 +101,7 @@ useEffect(() => {
 
   const handleOrientation = (event) => {
     if (event.gamma === null || event.beta === null || event.alpha === null) return;
-    const gamma = event.gamma;
+    const gamma = Math.abs( event.gamma);
     
     setGammaValue(gamma.toFixed(2));
     setBeta(event.beta.toFixed(2));
