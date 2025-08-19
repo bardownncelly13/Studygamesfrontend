@@ -14,6 +14,7 @@ const SpyLobby = ({ deck, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isConnected, setIsConnected] = useState(socket.connected);
+
   useEffect(() => {
     function onConnect() {
       console.log("Socket connected with ID:", socket.id);
@@ -31,6 +32,7 @@ const SpyLobby = ({ deck, onBack }) => {
       socket.off("disconnect", onDisconnect);
     };
   }, []);
+
   const getGuestId = () => {
     let guestId = localStorage.getItem("guestId");
     if (!guestId) {
@@ -97,152 +99,90 @@ const SpyLobby = ({ deck, onBack }) => {
   
   const generateLobbyCode = () =>
     Math.random().toString(36).substring(2, 8).toUpperCase();
- 
-  // Create lobby (host)
-  // const handleCreateLobby = async() => {
-  //   if (!playerName.trim()) return;
-  //    if (!socket.connected) {
-  //   console.log("Waiting for socket to connect...");
-  //   await new Promise(resolve => socket.once("connect", resolve));
-  //  }
 
-  //   const code = generateLobbyCode();
-  //   setLoading(true);
-  //   setIsHost(true);
-
-  //   console.log("Creating lobby with code:", code);
-  //   socket.emit("createLobby", { code, host: { id: userId, name: playerName },deck: deck.cards });
-
-  //   socket.once("lobbyCreated", ({ code: createdCode, players , deck}) => {
-  //     console.log("Lobby successfully created:", createdCode, players, deck);
-  //     setLoading(false);
-  //     setLobbyCode(createdCode);
-  //     navigate(`/lobby/${createdCode}`);
-  //   });
-  // };
-//   useEffect(() => {
-//   if(lobbyCode, isHost,deck){
-//   logToScreen("🟢 Lobby component mounted with props/state:", {
-//     lobbyCode,
-//     isHost,
-//     deck,
-//   });
+//debug for mobile
+//   function logToScreen(...args) {
+//     const msg = args.map(a => {
+//       try {
+//         return typeof a === "object" ? JSON.stringify(a) : String(a);
+//       } catch {
+//         return String(a);
+//       }
+//   }).join(" ");
+//   // Floating debug panel
+//   let debugPanel = document.getElementById("debug-panel");
+//   if (!debugPanel) {
+//     debugPanel = document.createElement("div");
+//     debugPanel.id = "debug-panel";
+//     debugPanel.style.position = "fixed";
+//     debugPanel.style.top = "10px";
+//     debugPanel.style.right = "10px";
+//     debugPanel.style.maxHeight = "40vh";
+//     debugPanel.style.width = "90%";
+//     debugPanel.style.overflowY = "auto";
+//     debugPanel.style.backgroundColor = "white";
+//     debugPanel.style.color = "black";
+//     debugPanel.style.padding = "8px";
+//     debugPanel.style.fontSize = "12px";
+//     debugPanel.style.border = "1px solid black";
+//     debugPanel.style.zIndex = 9999;
+//     debugPanel.style.fontFamily = "monospace";
+//     document.body.appendChild(debugPanel);
 //   }
-//   else{
-//     logToScreen("w8")
-//   }
-// }, [lobbyCode, isHost, deck]);
-function logToScreen(...args) {
-  const msg = args.map(a => {
-    try {
-      return typeof a === "object" ? JSON.stringify(a) : String(a);
-    } catch {
-      return String(a);
-    }
-  }).join(" ");
 
-  // Floating debug panel
-  let debugPanel = document.getElementById("debug-panel");
-  if (!debugPanel) {
-    debugPanel = document.createElement("div");
-    debugPanel.id = "debug-panel";
-    debugPanel.style.position = "fixed";
-    debugPanel.style.top = "10px";
-    debugPanel.style.right = "10px";
-    debugPanel.style.maxHeight = "40vh";
-    debugPanel.style.width = "90%";
-    debugPanel.style.overflowY = "auto";
-    debugPanel.style.backgroundColor = "white";
-    debugPanel.style.color = "black";
-    debugPanel.style.padding = "8px";
-    debugPanel.style.fontSize = "12px";
-    debugPanel.style.border = "1px solid black";
-    debugPanel.style.zIndex = 9999;
-    debugPanel.style.fontFamily = "monospace";
-    document.body.appendChild(debugPanel);
-  }
+//   const el = document.createElement("div");
+//   el.textContent = msg;
+//   debugPanel.appendChild(el);
+//   debugPanel.scrollTop = debugPanel.scrollHeight;
 
-  const el = document.createElement("div");
-  el.textContent = msg;
-  debugPanel.appendChild(el);
-  debugPanel.scrollTop = debugPanel.scrollHeight;
-
-  console.log(...args);
-}
+//   console.log(...args);
+// }
 
 // Create lobby (host)
 const handleCreateLobby = async () => {
-  logToScreen("🏁 handleCreateLobby called");
+  //logToScreen("🏁 handleCreateLobby called");
   if (!playerName.trim()) {
-    logToScreen("❌ Player name missing, cannot create lobby");
+    //logToScreen("❌ Player name missing, cannot create lobby");
     return;
   }
 
   if (!socket.connected) {
-    logToScreen("⏳ Waiting for socket to connect...");
+    //logToScreen("⏳ Waiting for socket to connect...");
     await new Promise(resolve => socket.once("connect", resolve));
-    logToScreen("✅ Socket connected:", socket.id);
+    //logToScreen("✅ Socket connected:", socket.id);
   } else {
-    logToScreen("✅ Socket already connected:", socket.id);
+    //logToScreen("✅ Socket already connected:", socket.id);
   }
 
   const code = generateLobbyCode();
   setLoading(true);
   setIsHost(true);
 
-  logToScreen("🚀 Emitting createLobby with code:", code);
+  //logToScreen("🚀 Emitting createLobby with code:", code);
   socket.emit("createLobby", { code, host: { id: userId, name: playerName }, deck: deck.cards });
 
   const timeout = setTimeout(() => {
-    logToScreen("⚠️ Timed out waiting for lobbyCreated event!");
+    //logToScreen("⚠️ Timed out waiting for lobbyCreated event!");
     setLoading(false);
   }, 7000);
 
   socket.once("lobbyCreated", ({ code: createdCode, players, deck }) => {
     clearTimeout(timeout);
-    logToScreen("🎉 Lobby successfully created:", createdCode);
-    logToScreen("Players:", players);
-    logToScreen("Deck size:", deck?.length || 0);
+    //logToScreen("🎉 Lobby successfully created:", createdCode);
+    //logToScreen("Players:", players);
+    //logToScreen("Deck size:", deck?.length || 0);
 
     setLoading(false);
     setLobbyCode(createdCode);
     setTimeout(() => {
-      logToScreen("➡️ Navigating to lobby page:", `/lobby/${createdCode}`);
+      //logToScreen("➡️ Navigating to lobby page:", `/lobby/${createdCode}`);
       navigate(`/lobby/${createdCode}`);
     }, 1);
   });
 };
 
-  // Join lobby (non-host)
-//   const handleJoinLobby = () => {
-  
-//   if (!socket || !lobbyCode || !playerName.trim()) {
-//     alert("Please enter a lobby code and your name.");
-//     return;
-//   }
-
-//   setLoading(true);
-
-//   const player = { id: userId, name: playerName };
-//   localStorage.setItem("savedUser", JSON.stringify(player)); // persist name
-  
-//   console.log("Joining lobby with code:", lobbyCode);
-//   socket.emit("joinLobby", { code: lobbyCode, player });
-
-//   // Use once instead of on
-//   socket.once("updatePlayers", (players) => {
-//     console.log("Players updated in lobby:", players);
-//     setLoading(false);
-//     navigate(`/lobby/${lobbyCode}`);
-//   });
-//   socket.once("JoinError", (msg) => {
-//       console.error("Join error:", msg);
-//       alert("Invalid Lobby Code")
-//       setLoading(false);
-//   });
-// };
 const handleJoinLobby = () => {
-  logToScreen("🏁 handleJoinLobby called");
+  //logToScreen("🏁 handleJoinLobby called");
   if (!socket || !lobbyCode || !playerName.trim()) {
     alert("Please enter a lobby code and your name.");
     return;
@@ -252,17 +192,17 @@ const handleJoinLobby = () => {
   const player = { id: userId, name: playerName };
   localStorage.setItem("savedUser", JSON.stringify(player));
   
-  logToScreen("🚪 Joining lobby with code:", lobbyCode);
+  //logToScreen("🚪 Joining lobby with code:", lobbyCode);
   socket.emit("joinLobby", { code: lobbyCode, player });
 
   socket.once("updatePlayers", (players) => {
-    logToScreen("✅ Players updated in lobby:", players);
+    //logToScreen("✅ Players updated in lobby:", players);
     setLoading(false);
     navigate(`/lobby/${lobbyCode}`);
   });
 
   socket.once("JoinError", (msg) => {
-    logToScreen("❌ Join error:", msg);
+    //logToScreen("❌ Join error:", msg);
     alert("Invalid Lobby Code");
     setLoading(false);
   });
@@ -300,7 +240,8 @@ const handleJoinLobby = () => {
           type="text"
           placeholder="Enter your name"
           value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
+          onChange={(e) => setPlayerName(e.target.value.slice(0, 20))}
+          maxLength={20}
           className="mt-6 px-4 py-2 rounded-lg text-black font-medium bg-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1 w-64 text-center"
         />
 
@@ -325,6 +266,7 @@ const handleJoinLobby = () => {
               placeholder="Enter lobby code"
               value={lobbyCode}
               onChange={(e) => setLobbyCode(e.target.value.toUpperCase())}
+              maxLength={6}
               className="px-4 py-2 rounded-lg text-black font-medium bg-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1 w-64"
             />
             <button

@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import supabase from "../../databaseClient";
 import { useAuth } from "../../context/Authcontext";
 import { useParams, useNavigate } from "react-router-dom";
 import socket from "../../socket"
-import { io } from "socket.io-client";
 
 const MIN_PLAYERS = 1;
 
@@ -42,7 +40,6 @@ const SpyPlay = () => {
   const navigate = useNavigate();
   const { lobbyCode: paramCode } = useParams();
 
-  // State
   const [lobbyCode, setLobbyCode] = useState(paramCode || null);
   const [deck, setDeck] = useState([]);
   const [players, setPlayers] = useState([]);
@@ -53,39 +50,38 @@ const SpyPlay = () => {
   const [crossedPlayers, setCrossedPlayers] = useState([]);
   const [crossedLocations, setCrossedLocations] = useState([]);
 
-  // Initialize lobbyCode safely
   useEffect(() => {
     if (paramCode && paramCode !== lobbyCode) setLobbyCode(paramCode);
   }, [paramCode, lobbyCode]);
 
-  // Floating log panel
-  function logToScreen(...args) {
-    const msg = args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ");
-    let debugPanel = document.getElementById("debug-panel");
-    if (!debugPanel) {
-      debugPanel = document.createElement("div");
-      debugPanel.id = "debug-panel";
-      debugPanel.style.position = "fixed";
-      debugPanel.style.top = "10px";
-      debugPanel.style.right = "10px";
-      debugPanel.style.maxHeight = "40vh";
-      debugPanel.style.width = "90%";
-      debugPanel.style.overflowY = "auto";
-      debugPanel.style.backgroundColor = "white";
-      debugPanel.style.color = "black";
-      debugPanel.style.padding = "8px";
-      debugPanel.style.fontSize = "12px";
-      debugPanel.style.border = "1px solid black";
-      debugPanel.style.zIndex = 9999;
-      debugPanel.style.fontFamily = "monospace";
-      document.body.appendChild(debugPanel);
-    }
-    const el = document.createElement("div");
-    el.textContent = msg;
-    debugPanel.appendChild(el);
-    debugPanel.scrollTop = debugPanel.scrollHeight;
-    console.log(...args);
-  }
+  // testing pannel for mobile
+  // function logToScreen(...args) {
+  //   const msg = args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ");
+  //   let debugPanel = document.getElementById("debug-panel");
+  //   if (!debugPanel) {
+  //     debugPanel = document.createElement("div");
+  //     debugPanel.id = "debug-panel";
+  //     debugPanel.style.position = "fixed";
+  //     debugPanel.style.top = "10px";
+  //     debugPanel.style.right = "10px";
+  //     debugPanel.style.maxHeight = "40vh";
+  //     debugPanel.style.width = "90%";
+  //     debugPanel.style.overflowY = "auto";
+  //     debugPanel.style.backgroundColor = "white";
+  //     debugPanel.style.color = "black";
+  //     debugPanel.style.padding = "8px";
+  //     debugPanel.style.fontSize = "12px";
+  //     debugPanel.style.border = "1px solid black";
+  //     debugPanel.style.zIndex = 9999;
+  //     debugPanel.style.fontFamily = "monospace";
+  //     document.body.appendChild(debugPanel);
+  //   }
+  //   const el = document.createElement("div");
+  //   el.textContent = msg;
+  //   debugPanel.appendChild(el);
+  //   debugPanel.scrollTop = debugPanel.scrollHeight;
+  //   console.log(...args);
+  // }
 
   //Persist user
 
@@ -99,19 +95,11 @@ const SpyPlay = () => {
     const saved = localStorage.getItem("savedUser");
     if (saved) return JSON.parse(saved);
 
-    // ⚠️ don’t prompt immediately — wait until we know if we’re host
     return null;
   };
 
   const [currentUser, setCurrentUser] = useState(getPersistedUser());
   
-
-  // Lobby mounted log
-  useEffect(() => {
-    if (!lobbyCode) return;
-    setTimeout(() => logToScreen("✅ SpyPlay mounted with code:", lobbyCode), 50);
-    setLoading(false);
-  }, [lobbyCode]);
 
   // Load persisted game if exists
   useEffect(() => {
@@ -176,8 +164,7 @@ useEffect(() => {
   if (currentUser) {
     socket.emit("joinLobby", { code: lobbyCode, player: currentUser });
   } else {
-    // Request host immediately, since no user yet
-    logToScreen("📡 No currentUser, requesting host from server");
+    //logToScreen("📡 No currentUser, requesting host from server");
     socket.emit("getHost", { code: lobbyCode });
   }
 
@@ -188,7 +175,7 @@ useEffect(() => {
 
   const handleHostIs = ({ host }) => {
     if (host) {
-      logToScreen("⭐ Received host from server:", host);
+      //logToScreen("⭐ Received host from server:", host);
       localStorage.setItem("savedUser", JSON.stringify(host));
       setCurrentUser(host);
       socket.emit("joinLobby", { code: lobbyCode, player: host }); // join immediately
@@ -266,7 +253,15 @@ useEffect(() => {
         <h3 className="text-xl font-semibold mb-2">Players ({players.length}):</h3>
         <ul className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           {players.map((p) => (
-            <li key={p.id} onClick={() => toggleCrossedPlayer(p.id)} className={`cursor-pointer px-4 py-2 rounded-lg text-center border ${crossedPlayers.includes(p.id) ? "line-through bg-red-700/50 border-red-500" : "bg-gray-800/60 border-gray-600 hover:bg-gray-700/70"} transition-all duration-200`}>
+            <li
+              key={p.id}
+              onClick={() => toggleCrossedPlayer(p.id)}
+              className={`cursor-pointer px-4 py-2 rounded-lg text-center border break-words
+                ${crossedPlayers.includes(p.id)
+                  ? "line-through bg-red-700/50 border-red-500"
+                  : "bg-gray-800/60 border-gray-600 hover:bg-gray-700/70"}
+                transition-all duration-200`}
+            >
               {p.name}
             </li>
           ))}
