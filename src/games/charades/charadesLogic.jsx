@@ -91,7 +91,7 @@ const CharadesPlay = ({ deck, onBack }) => {
       setOrientationEnabled(true); // Android usually works
     }
   };
-
+const [gammaValue, setGammaValue] = useState(null);
   // Tilt detection
   useEffect(() => {
     if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
@@ -100,6 +100,7 @@ const CharadesPlay = ({ deck, onBack }) => {
     const handleOrientation = (event) => {
       if (event.gamma === null) return;
       const gamma = event.gamma;
+      setGammaValue(gamma.toFixed(2));
 
       // Ignore small movements near vertical
       if (Math.abs(gamma) > 70 || Math.abs(gamma) < 110) return;
@@ -239,6 +240,7 @@ const CharadesPlay = ({ deck, onBack }) => {
 
       <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center w-full">
         <div className="text-xl mb-6">{timeLeft}s</div>
+        <p className="mt-4 text-lg">Gamma: {gammaValue ?? "—"}</p>
         <div className="p-8 mb-6 max-w-md w-full">
           <h3 className="text-5xl font-semibold">{cards[currentCardIndex]?.prompt}</h3>
         </div>
