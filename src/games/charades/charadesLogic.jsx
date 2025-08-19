@@ -100,22 +100,20 @@ const [gammaValue, setGammaValue] = useState(null);
 const handleOrientation = (event) => {
   if (event.gamma === null) return;
   const gamma = event.gamma;
+  setGammaValue(gamma.toFixed(2));
 
-  setGammaValue(gamma.toFixed(2)); // show live gamma
+  // If we haven't set orientation yet, determine it from initial gamma
+  if (orientationMode === null) {
+    // If gamma starts negative, we assume volume buttons are on top
+    setOrientationMode(gamma < 0 ? "buttonsTop" : "buttonsBottom");
+  }
 
-  // Define thresholds around ±90 for detecting tilt
-  const uprightThreshold = 20; // how far away from upright before we count
-  const leftLimit = -90 + uprightThreshold;   // e.g. -70
-  const rightLimit = 90 - uprightThreshold;   // e.g. +70
-
-  // Ignore if we're still close to upright
-  if (gamma > leftLimit && gamma < rightLimit) return;
-
-  // Decide action
-  if (gamma <= leftLimit) {
-    handleCorrect(); // tilted left
-  } else if (gamma >= rightLimit) {
-    handleSkip(); // tilted right
+  if (orientationMode === "buttonsTop") {
+    if (gamma > -70) handleCorrect();
+    else if (gamma < 70) handleSkip();
+  } else if (orientationMode === "buttonsBottom") {
+    if (gamma < 70) handleCorrect();
+    else if (gamma > -70) handleSkip();
   }
 };
       window.addEventListener("deviceorientation", handleOrientation);
