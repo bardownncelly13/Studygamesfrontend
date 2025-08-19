@@ -93,7 +93,7 @@ const CharadesPlay = ({ deck, onBack }) => {
   };
 const [gammaValue, setGammaValue] = useState(null);
 const[beta,setBeta]= useState(null);
-cont [alpha, setAlpha] = useState(null);
+const [alpha, setAlpha] = useState(null);
 const [orientationMode, setOrientationMode] = useState(null);
   // Tilt detection
 useEffect(() => {
