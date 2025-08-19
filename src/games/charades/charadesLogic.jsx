@@ -85,28 +85,42 @@ const CharadesPlay = ({ deck, onBack }) => {
 
   // Device tilt detection on mobile landscape during gameplay
   useEffect(() => {
-    if (!isMobile || !isLandscape) return;
+  if (!isMobile || !isLandscape) return;
+  if (countdown > 0 || gameOver) return;
 
-    // Only listen when countdown is 0 and game not over
-    if (countdown > 0 || gameOver) return;
+  const handleOrientation = (event) => {
+    if (event.gamma === null) return;
+    const gamma = event.gamma;
 
-    const handleOrientation = (event) => {
-      if (event.beta === null || event.gamma === null) return;
+    if (gamma < -30) handleCorrect();
+    else if (gamma > 30) handleSkip();
+  };
 
-      const gamma = event.gamma; // -90 to 90: left/right tilt
-
-      if (gamma < -30) {
-        handleCorrect();
-      } else if (gamma > 30) {
-        handleSkip();
+  const enableOrientation = async () => {
+    if (
+      typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === "granted") {
+          window.addEventListener("deviceorientation", handleOrientation);
+        }
+      } catch (err) {
+        console.warn("Orientation permission denied:", err);
       }
-    };
-    window.addEventListener("deviceorientation", handleOrientation);
+    } else {
+      window.addEventListener("deviceorientation", handleOrientation);
+    }
+  };
 
-    return () => {
-      window.removeEventListener("deviceorientation", handleOrientation);
-    };
-  }, [isMobile, isLandscape, countdown, gameOver, handleCorrect, handleSkip]);
+  enableOrientation();
+
+  return () => {
+    window.removeEventListener("deviceorientation", handleOrientation);
+  };
+}, [isMobile, isLandscape, countdown, gameOver, handleCorrect, handleSkip]);
+
 
   // Reset game state on new deck load
   useEffect(() => {
@@ -123,16 +137,15 @@ const CharadesPlay = ({ deck, onBack }) => {
   }, [deck]);
 
   // Countdown timer
-  useEffect(() => {
-    if (countdown <= 0) return;
+useEffect(() => {
+  if (countdown <= 0 || !isLandscape) return;
 
-    const countdownTimer = setInterval(() => {
-      setCountdown((prev) => prev - 1);
-    }, 1000);
+  const countdownTimer = setInterval(() => {
+    setCountdown((prev) => prev - 1);
+  }, 1000);
 
-    return () => clearInterval(countdownTimer);
-  }, [countdown]);
-
+  return () => clearInterval(countdownTimer);
+}, [countdown, isLandscape]);
   // Round timer
   useEffect(() => {
     if (countdown > 0 || timeLeft <= 0) return;
