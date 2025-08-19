@@ -97,18 +97,27 @@ const [gammaValue, setGammaValue] = useState(null);
     if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
 
-    const handleOrientation = (event) => {
-      if (event.gamma === null) return;
-      const gamma = event.gamma;
-      setGammaValue(gamma.toFixed(2));
+const handleOrientation = (event) => {
+  if (event.gamma === null) return;
+  const gamma = event.gamma;
 
-      // Ignore small movements near vertical
-      if ((Math.abs(gamma) < -70 || Math.abs(gamma) > -90)||(Math.abs(gamma) < 90 || Math.abs(gamma) > 70)) return;
+  setGammaValue(gamma.toFixed(2)); // show live gamma
 
-      if (gamma > -70) handleCorrect();
-      else if (gamma < 70) handleSkip();
-    };
+  // Define thresholds around ±90 for detecting tilt
+  const uprightThreshold = 20; // how far away from upright before we count
+  const leftLimit = -90 + uprightThreshold;   // e.g. -70
+  const rightLimit = 90 - uprightThreshold;   // e.g. +70
 
+  // Ignore if we're still close to upright
+  if (gamma > leftLimit && gamma < rightLimit) return;
+
+  // Decide action
+  if (gamma <= leftLimit) {
+    handleCorrect(); // tilted left
+  } else if (gamma >= rightLimit) {
+    handleSkip(); // tilted right
+  }
+};
       window.addEventListener("deviceorientation", handleOrientation);
       return () => window.removeEventListener("deviceorientation", handleOrientation);
   }, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, handleCorrect, handleSkip]);
