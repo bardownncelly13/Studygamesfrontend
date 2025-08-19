@@ -94,32 +94,34 @@ const CharadesPlay = ({ deck, onBack }) => {
 const [gammaValue, setGammaValue] = useState(null);
 const [orientationMode, setOrientationMode] = useState(null);
   // Tilt detection
-  useEffect(() => {
-    if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
+useEffect(() => {
+  if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
+  const handleOrientation = (event) => {
+    if (event.gamma === null) return;
+    const gamma = event.gamma;
+    setGammaValue(gamma.toFixed(2));
 
-const handleOrientation = (event) => {
-  if (event.gamma === null) return;
-  const gamma = event.gamma;
-  setGammaValue(gamma.toFixed(2));
+    // If we haven't set orientation yet, determine it from initial gamma
+    if (orientationMode === null) {
+      setOrientationMode(gamma < 0 ? "buttonsTop" : "buttonsBottom");
+    }
 
-  // If we haven't set orientation yet, determine it from initial gamma
-  if (orientationMode === null) {
-    // If gamma starts negative, we assume volume buttons are on top
-    setOrientationMode(gamma < 0 ? "buttonsTop" : "buttonsBottom");
-  }
+    if (orientationMode === "buttonsTop") {
+      if (gamma > -70) handleCorrect();
+      else if (gamma < 70) handleSkip();
+    } else if (orientationMode === "buttonsBottom") {
+      if (gamma < 70) handleCorrect();
+      else if (gamma > -70) handleSkip();
+    }
+  };
 
-  if (orientationMode === "buttonsTop") {
-    if (gamma > -70) handleCorrect();
-    else if (gamma < 70) handleSkip();
-  } else if (orientationMode === "buttonsBottom") {
-    if (gamma < 70) handleCorrect();
-    else if (gamma > -70) handleSkip();
-  }
-};
-      window.addEventListener("deviceorientation", handleOrientation);
-      return () => window.removeEventListener("deviceorientation", handleOrientation);
-  }, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, handleCorrect, handleSkip]);
+  window.addEventListener("deviceorientation", handleOrientation);
+
+  return () => {
+    window.removeEventListener("deviceorientation", handleOrientation);
+  };
+}, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, orientationMode, handleCorrect, handleSkip]);
 
   // Reset game on new deck
   useEffect(() => {
