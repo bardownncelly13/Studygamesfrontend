@@ -92,11 +92,12 @@ const CharadesPlay = ({ deck, onBack }) => {
     }
   };
 const [gammaValue, setGammaValue] = useState(null);
+const [orientationMode, setOrientationMode] = useState(null);
   // Tilt detection
   useEffect(() => {
     if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
-const [orientationMode, setOrientationMode] = useState(null); 
+
 const handleOrientation = (event) => {
   if (event.gamma === null) return;
   const gamma = event.gamma;
