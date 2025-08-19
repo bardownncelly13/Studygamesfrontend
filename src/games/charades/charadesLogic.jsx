@@ -91,17 +91,16 @@ const CharadesPlay = ({ deck, onBack }) => {
     if (countdown > 0 || gameOver) return;
 
     const handleOrientation = (event) => {
-      if (event.beta === null) return;
+      if (event.beta === null || event.gamma === null) return;
 
-      const beta = event.beta;
+      const gamma = event.gamma; // -90 to 90: left/right tilt
 
-      if (beta < -30) {
+      if (gamma < -30) {
         handleCorrect();
-      } else if (beta > 30) {
+      } else if (gamma > 30) {
         handleSkip();
       }
     };
-
     window.addEventListener("deviceorientation", handleOrientation);
 
     return () => {
