@@ -3,18 +3,14 @@ import { useEffect, useState, useRef, useCallback } from "react";
 const ROUND_DURATION = 60;
 const COUNTDOWN_DURATION = 3;
 
-const shuffleArray = (array) => {
-  return [...array].sort(() => Math.random() - 0.5);
-};
+const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      userAgent
-    );
+    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     setIsMobile(mobile);
   }, []);
 
@@ -36,66 +32,49 @@ const CharadesPlay = ({ deck, onBack }) => {
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
   const [bgColor, setBgColor] = useState(NEUTRAL_BG);
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+  const [orientationEnabled, setOrientationEnabled] = useState(false);
 
-  // Ref to track cooldown for tilt triggers
   const lastTiltTimeRef = useRef(0);
-
-  // Wrap handleCorrect and handleSkip in useCallback for stable refs in event listener
-  const handleCorrect = useCallback(() => {
-    const now = Date.now();
-    if (now - lastTiltTimeRef.current < 1000) return; // 1s cooldown
-    lastTiltTimeRef.current = now;
-
-    setScore((prev) => prev + 1);
-
-    setBgColor(CORRECT_BG);
-    setTimeout(() => {
-      setBgColor(NEUTRAL_BG);
-      nextCard();
-    }, 800);
-  }, [setScore]);
-
-  const handleSkip = useCallback(() => {
-    const now = Date.now();
-    if (now - lastTiltTimeRef.current < 1000) return; // 1s cooldown
-    lastTiltTimeRef.current = now;
-
-    nextCard();
-  }, []);
-
   const cardsRef = useRef(cards);
 
   useEffect(() => {
     cardsRef.current = cards;
   }, [cards]);
 
-    const nextCard = () => {
-      setCurrentCardIndex((prev) => (prev + 1) % cardsRef.current.length);
-    };
+  const nextCard = useCallback(() => {
+    setCurrentCardIndex((prev) => (prev + 1) % cardsRef.current.length);
+  }, []);
 
-  // Handle screen orientation on mobile
+  const handleCorrect = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTiltTimeRef.current < 1000) return;
+    lastTiltTimeRef.current = now;
+
+    setScore((prev) => prev + 1);
+    setBgColor(CORRECT_BG);
+    setTimeout(() => {
+      setBgColor(NEUTRAL_BG);
+      nextCard();
+    }, 800);
+  }, [nextCard]);
+
+  const handleSkip = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTiltTimeRef.current < 1000) return;
+    lastTiltTimeRef.current = now;
+
+    nextCard();
+  }, [nextCard]);
+
+  // Handle orientation changes
   useEffect(() => {
     if (!isMobile) return;
-
     const onResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
     window.addEventListener("resize", onResize);
-
     return () => window.removeEventListener("resize", onResize);
   }, [isMobile]);
 
-  // Device tilt detection on mobile landscape during gameplay
-  useEffect(() => {
-  if (!isMobile || !isLandscape) return;
-  if (countdown > 0 || gameOver) return;
-
-  const handleOrientation = (event) => {
-    if (event.gamma === null) return;
-    const gamma = event.gamma;
-
-    if (gamma < -30) handleCorrect();
-    else if (gamma > 30) handleSkip();
-  };
-
+  // Enable device orientation (must be called on user gesture)
   const enableOrientation = async () => {
     if (
       typeof DeviceOrientationEvent !== "undefined" &&
@@ -103,26 +82,35 @@ const CharadesPlay = ({ deck, onBack }) => {
     ) {
       try {
         const permission = await DeviceOrientationEvent.requestPermission();
-        if (permission === "granted") {
-          window.addEventListener("deviceorientation", handleOrientation);
-        }
+        if (permission === "granted") setOrientationEnabled(true);
+        else console.warn("Orientation permission denied");
       } catch (err) {
-        console.warn("Orientation permission denied:", err);
+        console.warn("Orientation permission error:", err);
       }
     } else {
-      window.addEventListener("deviceorientation", handleOrientation);
+      setOrientationEnabled(true); // Android usually works
     }
   };
 
-  enableOrientation();
+  // Tilt detection
+  useEffect(() => {
+    if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
-  return () => {
-    window.removeEventListener("deviceorientation", handleOrientation);
-  };
-}, [isMobile, isLandscape, countdown, gameOver, handleCorrect, handleSkip]);
+    const handleOrientation = (event) => {
+      // Debug: log all axes
+      console.log("Orientation:", { beta: event.beta, gamma: event.gamma, alpha: event.alpha });
+      if (event.gamma === null) return;
 
+      const gamma = event.gamma;
+      if (gamma < -30) handleCorrect();
+      else if (gamma > 30) handleSkip();
+    };
 
-  // Reset game state on new deck load
+    window.addEventListener("deviceorientation", handleOrientation);
+    return () => window.removeEventListener("deviceorientation", handleOrientation);
+  }, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, handleCorrect, handleSkip]);
+
+  // Reset game on new deck
   useEffect(() => {
     if (deck && deck.cards) {
       setCards(shuffleArray(deck.cards));
@@ -137,15 +125,12 @@ const CharadesPlay = ({ deck, onBack }) => {
   }, [deck]);
 
   // Countdown timer
-useEffect(() => {
-  if (countdown <= 0 || !isLandscape) return;
+  useEffect(() => {
+    if (countdown <= 0 || !isLandscape) return;
+    const countdownTimer = setInterval(() => setCountdown((prev) => prev - 1), 1000);
+    return () => clearInterval(countdownTimer);
+  }, [countdown, isLandscape]);
 
-  const countdownTimer = setInterval(() => {
-    setCountdown((prev) => prev - 1);
-  }, 1000);
-
-  return () => clearInterval(countdownTimer);
-}, [countdown, isLandscape]);
   // Round timer
   useEffect(() => {
     if (countdown > 0 || timeLeft <= 0) return;
@@ -159,20 +144,15 @@ useEffect(() => {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [countdown, timeLeft]);
 
-  // Background color on game over resets to neutral after 2s
+  // Background reset on game over
   useEffect(() => {
-    if (gameOver) {
-      setBgColor(GAMEOVER_BG);
-      const timeout = setTimeout(() => {
-        setBgColor(NEUTRAL_BG);
-      }, 2000);
-
-      return () => clearTimeout(timeout);
-    }
+    if (!gameOver) return;
+    setBgColor(GAMEOVER_BG);
+    const timeout = setTimeout(() => setBgColor(NEUTRAL_BG), 2000);
+    return () => clearTimeout(timeout);
   }, [gameOver]);
 
   const restartGame = () => {
@@ -188,29 +168,36 @@ useEffect(() => {
 
   const wrapperClass = (bgColor) => `${bgColor} min-h-screen relative p-6 text-white`;
 
-  // Show rotate message on mobile portrait
+  // Portrait rotate message
   if (isMobile && !isLandscape) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-blue-700 text-white">
         <p className="text-3xl font-bold mb-4">Please rotate your device</p>
         <p className="text-lg">This game works best in landscape mode.</p>
-        <button
-          onClick={onBack}
-          className="mt-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors"
-        >
+        <button onClick={onBack} className="mt-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors">
           ← Back to Decks
         </button>
       </div>
     );
   }
 
+  // Motion permission screen for mobile
+  if (isMobile && !orientationEnabled) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-blue-700 text-white">
+        <p className="text-2xl mb-4">Tap to enable motion sensors</p>
+        <button className="px-6 py-3 bg-green-500 rounded-lg" onClick={enableOrientation}>
+          Enable Motion
+        </button>
+      </div>
+    );
+  }
+
+  // Countdown screen
   if (countdown > 0) {
     return (
       <div className={wrapperClass(NEUTRAL_BG)}>
-        <button
-          onClick={onBack}
-          className="absolute top-6 left-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors"
-        >
+        <button onClick={onBack} className="absolute top-6 left-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors">
           ← Back to Decks
         </button>
         <div className="flex flex-col justify-center items-center min-h-screen">
@@ -221,23 +208,18 @@ useEffect(() => {
     );
   }
 
+  // Game over screen
   if (gameOver) {
     return (
       <div className={wrapperClass(bgColor)}>
-        <button
-          onClick={onBack}
-          className="absolute top-6 left-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors"
-        >
+        <button onClick={onBack} className="absolute top-6 left-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors">
           ← Back to Decks
         </button>
         <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Time’s Up!</h2>
           <p className="text-xl mb-4">Final Score: {score}</p>
           <div>
-            <button
-              className="px-6 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition mr-4"
-              onClick={restartGame}
-            >
+            <button className="px-6 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition mr-4" onClick={restartGame}>
               Play Again
             </button>
           </div>
@@ -246,39 +228,26 @@ useEffect(() => {
     );
   }
 
-  // Gameplay screen for both desktop and mobile
+  // Gameplay screen
   return (
     <div className={wrapperClass(bgColor)}>
-      <button
-        onClick={onBack}
-        className="absolute top-6 left-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors"
-      >
+      <button onClick={onBack} className="absolute top-6 left-6 px-4 py-2 bg-light-100/10 rounded-lg hover:bg-light-100/20 transition-colors">
         ← Back to Decks
       </button>
 
       <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center w-full">
         <div className="text-xl mb-6">{timeLeft}s</div>
-
-        {/* Prompt box without border or shadow, bigger text */}
         <div className="p-8 mb-6 max-w-md w-full">
           <h3 className="text-5xl font-semibold">{cards[currentCardIndex]?.prompt}</h3>
         </div>
-
         <div className="flex justify-center gap-4 max-w-md w-full">
-          <button
-            className="px-6 py-3 rounded-lg bg-green-500 hover:bg-green-600 transition"
-            onClick={handleCorrect}
-          >
+          <button className="px-6 py-3 rounded-lg bg-green-500 hover:bg-green-600 transition" onClick={handleCorrect}>
             Correct (+1)
           </button>
-          <button
-            className="px-6 py-3 rounded-lg bg-gray-500 hover:bg-gray-600 transition"
-            onClick={handleSkip}
-          >
+          <button className="px-6 py-3 rounded-lg bg-gray-500 hover:bg-gray-600 transition" onClick={handleSkip}>
             Skip
           </button>
         </div>
-
         <p className="mt-6 text-lg">Score: {score}</p>
       </div>
     </div>
