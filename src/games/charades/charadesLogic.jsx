@@ -96,18 +96,16 @@ const CharadesPlay = ({ deck, onBack }) => {
   useEffect(() => {
     if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
-    const TILT_THRESHOLD = 45; // degrees for intentional tilt
-    const DEADZONE = 10;       // degrees around 0 ignored
 
     const handleOrientation = (event) => {
       if (event.gamma === null) return;
       const gamma = event.gamma;
 
       // Ignore small movements near vertical
-      if (Math.abs(gamma) < DEADZONE) return;
+      if (Math.abs(gamma) > 70 || Math.abs(gamma) < 110) return;
 
-      if (gamma < -TILT_THRESHOLD) handleCorrect();
-      else if (gamma > TILT_THRESHOLD) handleSkip();
+      if (gamma < 70) handleCorrect();
+      else if (gamma > 110) handleSkip();
     };
 
       window.addEventListener("deviceorientation", handleOrientation);
