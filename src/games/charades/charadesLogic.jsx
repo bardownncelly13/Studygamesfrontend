@@ -103,10 +103,10 @@ const [gammaValue, setGammaValue] = useState(null);
       setGammaValue(gamma.toFixed(2));
 
       // Ignore small movements near vertical
-      if ((Math.abs(gamma) < -70 || Math.abs(gamma) > 70)) return;
+      if ((Math.abs(gamma) < -70 || Math.abs(gamma) > -90)||(Math.abs(gamma) < 90 || Math.abs(gamma) > 70)) return;
 
-      if (gamma < -70) handleCorrect();
-      else if (gamma > 110) handleSkip();
+      if (gamma > -70) handleCorrect();
+      else if (gamma < 70) handleSkip();
     };
 
       window.addEventListener("deviceorientation", handleOrientation);
