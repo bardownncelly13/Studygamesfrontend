@@ -151,7 +151,7 @@ useEffect(() => {
         }
         return prev - 1;
       });
-    }, 1000);
+    }, 100000);
     return () => clearInterval(timer);
   }, [countdown, timeLeft]);
 
