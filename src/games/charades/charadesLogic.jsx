@@ -33,7 +33,6 @@ const CharadesPlay = ({ deck, onBack }) => {
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
   const [bgColor, setBgColor] = useState(NEUTRAL_BG);
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-  //const [orientationEnabled, setOrientationEnabled] = useState(false);
 
   const lastTiltTimeRef = useRef(0);
   const cardsRef = useRef(cards);
@@ -78,26 +77,6 @@ const CharadesPlay = ({ deck, onBack }) => {
     return () => window.removeEventListener("resize", onResize);
   }, [isMobile]);
 
-  // Enable device orientation (must be called on user gesture)
-  // const enableOrientation = async () => {
-  //   if (
-  //     typeof DeviceOrientationEvent !== "undefined" &&
-  //     typeof DeviceOrientationEvent.requestPermission === "function"
-  //   ) {
-  //     try {
-  //       const permission = await DeviceOrientationEvent.requestPermission();
-  //       if (permission === "granted") setOrientationEnabled(true);
-  //       else console.warn("Orientation permission denied");
-  //     } catch (err) {
-  //       console.warn("Orientation permission error:", err);
-  //     }
-  //   } else {
-  //     setOrientationEnabled(true); // Android usually works
-  //   }
-  // };
-
-const [hasReset, setHasReset] = useState(true);
-const [gamma , setGamma] = useState(1);
 const hasResetRef = useRef(false);
   // Tilt detection
 useEffect(() => {
@@ -107,10 +86,6 @@ useEffect(() => {
 
       const gamma = event.gamma;
       const absbeta = Math.abs(event.beta);
-
-      // Debug: monitor gamma
-      setGamma(Math.abs(gamma).toFixed(0));
-
       const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
 
       // Enter neutral → arm the trigger
@@ -218,18 +193,6 @@ useEffect(() => {
     );
   }
 
-  // Motion permission screen for mobile
-  // if (isMobile && !orientationEnabled) {
-  //   return (
-  //     <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-blue-700 text-white">
-  //       <p className="text-2xl mb-4">Tap to enable motion sensors</p>
-  //       <button className="px-6 py-3 bg-green-500 rounded-lg" onClick={enableOrientation}>
-  //         Enable Motion
-  //       </button>
-  //     </div>
-  //   );
-  // }
-
   // Countdown screen
   if (countdown > 0) {
     return (
@@ -274,7 +237,6 @@ useEffect(() => {
 
       <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center w-full">
         <div className="text-xl mb-6">{timeLeft}s</div>
-        <p className="text-5xl font-semibold"> {gamma}</p>
         <div className="p-8 mb-6 max-w-md w-full">
           <h3 className="text-5xl font-semibold">{cards[currentCardIndex]?.prompt}</h3>
         </div>
