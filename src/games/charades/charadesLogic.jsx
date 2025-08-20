@@ -106,8 +106,8 @@ useEffect(() => {
     if (event.gamma === null || event.beta === null) return;
     const gamma =  event.gamma;
     const absbeta = Math.abs(event.beta);
-    setGamma(Math.abs(gamma));
-    const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
+    setGamma(Math.abs(gamma).toFixed(0));
+    const isNeutral = (Math.abs(gamma) > 60 && Math.abs(gamma) <= 90);
 
     if (isNeutral) {
       setHasReset(true);
