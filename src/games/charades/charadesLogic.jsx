@@ -100,13 +100,15 @@ useEffect(() => {
   if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
   const handleOrientation = (event) => {
-    if (event.gamma === null) return;
-    const gamma = ( event.gamma + 90);
+    if (event.gamma === null || event.beta === null || event.alpha === null) return;
+    const gamma = Math.abs( event.gamma);
     
     setGammaValue(gamma.toFixed(2));
+    setBeta(event.beta.toFixed(2));
+    setAlpha(event.alpha.toFixed(2));
 
     // If we haven't set orientation yet, determine it from initial gamma
-    
+    if(gamma >= 70 && gamma <= 90) return;
   };
 
   window.addEventListener("deviceorientation", handleOrientation);
@@ -244,6 +246,8 @@ useEffect(() => {
       <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center w-full">
         <div className="text-xl mb-6">{timeLeft}s</div>
         <p className="mt-4 text-lg">Gamma: {gammaValue ?? "—"}</p>
+        <p className="mt-4 text-lg">Beta: {beta ?? "—"}</p>
+        <p className="mt-4 text-lg">Alpha: {alpha ?? "—"}</p>
         <div className="p-8 mb-6 max-w-md w-full">
           <h3 className="text-5xl font-semibold">{cards[currentCardIndex]?.prompt}</h3>
         </div>
