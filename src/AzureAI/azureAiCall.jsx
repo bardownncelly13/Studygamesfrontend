@@ -14,6 +14,8 @@ export default async function callAzureOpenAI(messages) {
   const token = session?.access_token;
   if (!token) throw new Error('No access token found');
 
+  console.log(token);
+
   try {
     const response = await axios.post(
       backendUrl,
