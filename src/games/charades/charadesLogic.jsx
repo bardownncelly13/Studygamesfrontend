@@ -104,7 +104,6 @@ useEffect(() => {
     setGammaValue(gamma.toFixed(2));
     setBeta(absbeta.toFixed(2));
 
-    // If we haven't set orientation yet, determine it from initial gamma
     if(absbeta < 90 && (gamma >= 1 && gamma <= 60)){
       handleCorrect();
     }
@@ -124,7 +123,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("deviceorientation", handleOrientation);
   };
-}, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, orientationMode, handleCorrect, handleSkip]);
+}, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, handleCorrect, handleSkip]);
 
   // Reset game on new deck
   useEffect(() => {
