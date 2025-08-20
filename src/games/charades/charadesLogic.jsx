@@ -20,6 +20,7 @@ function useIsMobile() {
 const NEUTRAL_BG = "bg-blue-700";
 const CORRECT_BG = "bg-green-600";
 const GAMEOVER_BG = "bg-red-800/80";
+const SKIP_BG = "bg-blue-500"; // or "bg-indigo-600"
 
 const CharadesPlay = ({ deck, onBack }) => {
   const isMobile = useIsMobile();
@@ -62,8 +63,11 @@ const CharadesPlay = ({ deck, onBack }) => {
     const now = Date.now();
     if (now - lastTiltTimeRef.current < 1000) return;
     lastTiltTimeRef.current = now;
-
-    nextCard();
+    setBgColor(SKIP_BG);
+    setTimeout(() => {
+      setBgColor(NEUTRAL_BG);
+      nextCard();
+    }, 800);
   }, [nextCard]);
 
   // Handle orientation changes
@@ -91,8 +95,8 @@ const CharadesPlay = ({ deck, onBack }) => {
       setOrientationEnabled(true); // Android usually works
     }
   };
-const [gammaValue, setGammaValue] = useState(null);
-const[beta,setBeta]= useState(null);
+
+const [hasReset, setHasReset] = useState(true);
   // Tilt detection
 useEffect(() => {
   if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
@@ -101,20 +105,28 @@ useEffect(() => {
     if (event.gamma === null || event.beta === null) return;
     const gamma =  event.gamma;
     const absbeta = Math.abs(event.beta)
-    setGammaValue(gamma.toFixed(2));
-    setBeta(absbeta.toFixed(2));
+    
+    const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
 
+    if (isNeutral) {
+      setHasReset(true);
+      return;
+    }
     if(absbeta < 90 && (gamma >= 1 && gamma <= 60)){
       handleCorrect();
+      setHasReset(false);
     }
     if(absbeta > 90 && (gamma >= -60 && gamma <= -1 )){
       handleSkip();
+      setHasReset(false);
     }
     if(absbeta < 90 && (gamma >= -60 && gamma <= -1)){
       handleCorrect();
+      setHasReset(false);
     }
     if(absbeta > 90 && (gamma <= 60 && gamma >= 1)){
       handleSkip();
+      setHasReset(false);
     }
   };
 
@@ -252,8 +264,6 @@ useEffect(() => {
 
       <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center w-full">
         <div className="text-xl mb-6">{timeLeft}s</div>
-        <p className="mt-4 text-lg">Gamma: {gammaValue ?? "—"}</p>
-        <p className="mt-4 text-lg">Beta: {beta ?? "—"}</p>
         <div className="p-8 mb-6 max-w-md w-full">
           <h3 className="text-5xl font-semibold">{cards[currentCardIndex]?.prompt}</h3>
         </div>
