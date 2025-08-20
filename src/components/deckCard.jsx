@@ -1,3 +1,4 @@
+import { useState } from "react";
 const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete,requireMotion = false }) => {
   if (!deck) return null;
   const [motionDenied, setMotionDenied] = useState(false);
