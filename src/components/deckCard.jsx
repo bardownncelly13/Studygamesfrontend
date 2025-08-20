@@ -1,5 +1,6 @@
 const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete,requireMotion = false }) => {
   if (!deck) return null;
+  const [motionDenied, setMotionDenied] = useState(false);
   let borderColorClass;
   switch (isSelected) {
     case true:
@@ -11,17 +12,24 @@ const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete,requireMotion =
     default:
       borderColorClass = "border-light-100/10";
   }
-   const handlePlay = async (e) => {
+    const handlePlay = async (e) => {
     e.stopPropagation();
 
     // If motion is required, request it on iOS
-    if (requireMotion && typeof DeviceOrientationEvent !== "undefined" && 
-        typeof DeviceOrientationEvent.requestPermission === "function") {
+    if (
+      requireMotion &&
+      typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
       try {
         const response = await DeviceOrientationEvent.requestPermission();
+
         if (response !== "granted") {
+          setMotionDenied(true); // remember they said no
           alert("Motion access is required to play this game.");
           return;
+        } else {
+          setMotionDenied(false); // reset if granted
         }
       } catch (err) {
         console.error("Permission error:", err);
