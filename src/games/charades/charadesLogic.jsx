@@ -102,34 +102,43 @@ const [gamma , setGamma] = useState(1);
 useEffect(() => {
   if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
 
-  const handleOrientation = (event) => {
-    if (event.gamma === null || event.beta === null) return;
-    const gamma =  event.gamma;
-    const absbeta = Math.abs(event.beta);
-    setGamma(Math.abs(gamma).toFixed(0));
-    const isNeutral = (Math.abs(gamma) > 60 && Math.abs(gamma) <= 90);
+const hasResetRef = useRef(false);
 
-    if (isNeutral) {
-      setHasReset(true);
-      return;
+const handleOrientation = (event) => {
+  if (event.gamma === null || event.beta === null) return;
+
+  const gamma = event.gamma;
+  const absbeta = Math.abs(event.beta);
+
+  // Debug: monitor gamma
+  setGamma(Math.abs(gamma).toFixed(0));
+
+  const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
+
+  // Enter neutral → arm the trigger
+  if (isNeutral) {
+    hasResetRef.current = true;
+    return;
+  }
+
+  // Only fire if we've been reset
+  if (hasResetRef.current) {
+    if (absbeta < 90 && gamma >= 1 && gamma <= 60) {
+      handleCorrect();
+      hasResetRef.current = false; // lock until neutral again
     }
-    if(hasReset){
-      if(absbeta < 90 && (gamma >= 1 && gamma <= 60)){
-        handleCorrect();
-        setHasReset(false);
-      }
-      if(absbeta > 90 && (gamma >= -60 && gamma <= -1 )){
-        handleSkip();
-        setHasReset(false);
-      }
-      if(absbeta < 90 && (gamma >= -60 && gamma <= -1)){
-        handleCorrect();
-        setHasReset(false);
-      }
-      if(absbeta > 90 && (gamma <= 60 && gamma >= 1)){
-        handleSkip();
-        setHasReset(false);
-      }
+    if (absbeta > 90 && gamma >= -60 && gamma <= -1) {
+      handleSkip();
+      hasResetRef.current = false;
+    }
+    if (absbeta < 90 && gamma >= -60 && gamma <= -1) {
+      handleCorrect();
+      hasResetRef.current = false;
+    }
+    if (absbeta > 90 && gamma <= 60 && gamma >= 1) {
+      handleSkip();
+      hasResetRef.current = false;
+    }
   }
   };
 
