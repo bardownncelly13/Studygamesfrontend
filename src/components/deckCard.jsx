@@ -1,4 +1,4 @@
-const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete }) => {
+const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete,requireMotion = false }) => {
   if (!deck) return null;
   let borderColorClass;
   switch (isSelected) {
@@ -11,6 +11,28 @@ const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete }) => {
     default:
       borderColorClass = "border-light-100/10";
   }
+   const handlePlay = async (e) => {
+    e.stopPropagation();
+
+    // If motion is required, request it on iOS
+    if (requireMotion && typeof DeviceOrientationEvent !== "undefined" && 
+        typeof DeviceOrientationEvent.requestPermission === "function") {
+      try {
+        const response = await DeviceOrientationEvent.requestPermission();
+        if (response !== "granted") {
+          alert("Motion access is required to play this game.");
+          return;
+        }
+      } catch (err) {
+        console.error("Permission error:", err);
+        return;
+      }
+    }
+
+    // Finally start the deck
+    playDeck(deck);
+  };
+
   return (
     <div
       className={`deck-card bg-dark-100 p-6 rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-transform duration-200 cursor-pointer text-center border ${borderColorClass}`}
@@ -22,7 +44,7 @@ const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete }) => {
         className="mt-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white font-semibold px-3 py-1 rounded-full shadow-md hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300 ease-in-out"
         onClick={(e) => {
           e.stopPropagation();   
-          playDeck(deck);        
+          handlePlay()        
         }}
       >
         ▶ Play

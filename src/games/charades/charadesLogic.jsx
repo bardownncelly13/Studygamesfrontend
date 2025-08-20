@@ -33,7 +33,7 @@ const CharadesPlay = ({ deck, onBack }) => {
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
   const [bgColor, setBgColor] = useState(NEUTRAL_BG);
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-  const [orientationEnabled, setOrientationEnabled] = useState(false);
+  //const [orientationEnabled, setOrientationEnabled] = useState(false);
 
   const lastTiltTimeRef = useRef(0);
   const cardsRef = useRef(cards);
@@ -79,29 +79,29 @@ const CharadesPlay = ({ deck, onBack }) => {
   }, [isMobile]);
 
   // Enable device orientation (must be called on user gesture)
-  const enableOrientation = async () => {
-    if (
-      typeof DeviceOrientationEvent !== "undefined" &&
-      typeof DeviceOrientationEvent.requestPermission === "function"
-    ) {
-      try {
-        const permission = await DeviceOrientationEvent.requestPermission();
-        if (permission === "granted") setOrientationEnabled(true);
-        else console.warn("Orientation permission denied");
-      } catch (err) {
-        console.warn("Orientation permission error:", err);
-      }
-    } else {
-      setOrientationEnabled(true); // Android usually works
-    }
-  };
+  // const enableOrientation = async () => {
+  //   if (
+  //     typeof DeviceOrientationEvent !== "undefined" &&
+  //     typeof DeviceOrientationEvent.requestPermission === "function"
+  //   ) {
+  //     try {
+  //       const permission = await DeviceOrientationEvent.requestPermission();
+  //       if (permission === "granted") setOrientationEnabled(true);
+  //       else console.warn("Orientation permission denied");
+  //     } catch (err) {
+  //       console.warn("Orientation permission error:", err);
+  //     }
+  //   } else {
+  //     setOrientationEnabled(true); // Android usually works
+  //   }
+  // };
 
 const [hasReset, setHasReset] = useState(true);
 const [gamma , setGamma] = useState(1);
 const hasResetRef = useRef(false);
   // Tilt detection
 useEffect(() => {
-  if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
+  if (!isMobile || !isLandscape || countdown > 0 || gameOver) return;
     const handleOrientation = (event) => {
       if (event.gamma === null || event.beta === null) return;
 
@@ -145,7 +145,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("deviceorientation", handleOrientation);
   };
-}, [isMobile, isLandscape, orientationEnabled, countdown, gameOver, handleCorrect, handleSkip]);
+}, [isMobile, isLandscape, countdown, gameOver, handleCorrect, handleSkip]);
 
   // Reset game on new deck
   useEffect(() => {
@@ -219,16 +219,16 @@ useEffect(() => {
   }
 
   // Motion permission screen for mobile
-  if (isMobile && !orientationEnabled) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-blue-700 text-white">
-        <p className="text-2xl mb-4">Tap to enable motion sensors</p>
-        <button className="px-6 py-3 bg-green-500 rounded-lg" onClick={enableOrientation}>
-          Enable Motion
-        </button>
-      </div>
-    );
-  }
+  // if (isMobile && !orientationEnabled) {
+  //   return (
+  //     <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-blue-700 text-white">
+  //       <p className="text-2xl mb-4">Tap to enable motion sensors</p>
+  //       <button className="px-6 py-3 bg-green-500 rounded-lg" onClick={enableOrientation}>
+  //         Enable Motion
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   // Countdown screen
   if (countdown > 0) {

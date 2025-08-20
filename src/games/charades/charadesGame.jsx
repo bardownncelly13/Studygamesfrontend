@@ -11,6 +11,7 @@ export default function CharadesGame({ onBack }) {
       DeckMakerComponent={CharadesDeckMaker}
       title="Charades"
       searchPlaceholder="Search for Charades Decks to use"
+      requireMotion={true}
       onBack={onBack}
     />
   );

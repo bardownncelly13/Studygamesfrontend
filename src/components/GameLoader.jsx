@@ -28,6 +28,7 @@ export default function GameLoader({
   DeckMakerComponent,
   title,
   searchPlaceholder,
+  requireMotion = false,
   onBack,
 }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -120,6 +121,7 @@ export default function GameLoader({
                 isSelected={deck.id === selectedDeck}
                 playDeck={() => setCurrentDeck(deck)}
                 onDelete={() => handleDelete(deck.id)}
+                requireMotion={true}
               />
             ))}
             {Adddeck && (
