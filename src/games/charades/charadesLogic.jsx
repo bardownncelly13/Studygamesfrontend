@@ -98,49 +98,47 @@ const CharadesPlay = ({ deck, onBack }) => {
 
 const [hasReset, setHasReset] = useState(true);
 const [gamma , setGamma] = useState(1);
+const hasResetRef = useRef(false);
   // Tilt detection
 useEffect(() => {
   if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
+    const handleOrientation = (event) => {
+      if (event.gamma === null || event.beta === null) return;
 
-const hasResetRef = useRef(false);
+      const gamma = event.gamma;
+      const absbeta = Math.abs(event.beta);
 
-const handleOrientation = (event) => {
-  if (event.gamma === null || event.beta === null) return;
+      // Debug: monitor gamma
+      setGamma(Math.abs(gamma).toFixed(0));
 
-  const gamma = event.gamma;
-  const absbeta = Math.abs(event.beta);
+      const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
 
-  // Debug: monitor gamma
-  setGamma(Math.abs(gamma).toFixed(0));
+      // Enter neutral → arm the trigger
+      if (isNeutral) {
+        hasResetRef.current = true;
+        return;
+      }
 
-  const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
-
-  // Enter neutral → arm the trigger
-  if (isNeutral) {
-    hasResetRef.current = true;
-    return;
-  }
-
-  // Only fire if we've been reset
-  if (hasResetRef.current) {
-    if (absbeta < 90 && gamma >= 1 && gamma <= 60) {
-      handleCorrect();
-      hasResetRef.current = false; // lock until neutral again
-    }
-    if (absbeta > 90 && gamma >= -60 && gamma <= -1) {
-      handleSkip();
-      hasResetRef.current = false;
-    }
-    if (absbeta < 90 && gamma >= -60 && gamma <= -1) {
-      handleCorrect();
-      hasResetRef.current = false;
-    }
-    if (absbeta > 90 && gamma <= 60 && gamma >= 1) {
-      handleSkip();
-      hasResetRef.current = false;
-    }
-  }
-  };
+      // Only fire if we've been reset
+      if (hasResetRef.current) {
+        if (absbeta < 90 && gamma >= 1 && gamma <= 60) {
+          handleCorrect();
+          hasResetRef.current = false; // lock until neutral again
+        }
+        if (absbeta > 90 && gamma >= -60 && gamma <= -1) {
+          handleSkip();
+          hasResetRef.current = false;
+        }
+        if (absbeta < 90 && gamma >= -60 && gamma <= -1) {
+          handleCorrect();
+          hasResetRef.current = false;
+        }
+        if (absbeta > 90 && gamma <= 60 && gamma >= 1) {
+          handleSkip();
+          hasResetRef.current = false;
+        }
+      }
+      };
 
   window.addEventListener("deviceorientation", handleOrientation);
 
