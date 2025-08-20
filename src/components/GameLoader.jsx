@@ -128,7 +128,7 @@ export default function GameLoader({
               <Adddeck
                 onClick={() => {
                   setSelectedDeck("deckMaker");
-                  if (typeof Adddeck === "function") Adddeck();
+                  //if (typeof Adddeck === "function") Adddeck();
                 }}
                 isSelected={"deckMaker" === selectedDeck}
                 button={() => setDeckMaker(true)}
