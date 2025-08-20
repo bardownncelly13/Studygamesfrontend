@@ -27,7 +27,7 @@ const DeckCard = ({ deck, onClick, isSelected, playDeck,onDelete,requireMotion =
 
         if (response !== "granted") {
           setMotionDenied(true); // remember they said no
-          alert("Motion access is required to play this game.");
+          alert("Motion access is required to play this game. If you declined, Turn it on by going to Settings → Safari → Motion & Orientation Access");
           return;
         } else {
           setMotionDenied(false); // reset if granted
