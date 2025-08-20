@@ -97,6 +97,7 @@ const CharadesPlay = ({ deck, onBack }) => {
   };
 
 const [hasReset, setHasReset] = useState(true);
+cosnt [gamma , setGamma] = useState(1);
   // Tilt detection
 useEffect(() => {
   if (!isMobile || !isLandscape || !orientationEnabled || countdown > 0 || gameOver) return;
@@ -104,8 +105,8 @@ useEffect(() => {
   const handleOrientation = (event) => {
     if (event.gamma === null || event.beta === null) return;
     const gamma =  event.gamma;
-    const absbeta = Math.abs(event.beta)
-    
+    const absbeta = Math.abs(event.beta);
+    setGamma(Math.abs(gamma));
     const isNeutral = Math.abs(gamma) > 60 && Math.abs(gamma) <= 90;
 
     if (isNeutral) {
@@ -266,6 +267,7 @@ useEffect(() => {
 
       <div className="flex flex-col justify-center items-center min-h-screen px-6 text-center w-full">
         <div className="text-xl mb-6">{timeLeft}s</div>
+        <p className="text-5xl font-semibold"> {gamma}</p>
         <div className="p-8 mb-6 max-w-md w-full">
           <h3 className="text-5xl font-semibold">{cards[currentCardIndex]?.prompt}</h3>
         </div>
