@@ -112,22 +112,24 @@ useEffect(() => {
       setHasReset(true);
       return;
     }
-    if(absbeta < 90 && (gamma >= 1 && gamma <= 60)){
-      handleCorrect();
-      setHasReset(false);
-    }
-    if(absbeta > 90 && (gamma >= -60 && gamma <= -1 )){
-      handleSkip();
-      setHasReset(false);
-    }
-    if(absbeta < 90 && (gamma >= -60 && gamma <= -1)){
-      handleCorrect();
-      setHasReset(false);
-    }
-    if(absbeta > 90 && (gamma <= 60 && gamma >= 1)){
-      handleSkip();
-      setHasReset(false);
-    }
+    if(hasReset){
+      if(absbeta < 90 && (gamma >= 1 && gamma <= 60)){
+        handleCorrect();
+        setHasReset(false);
+      }
+      if(absbeta > 90 && (gamma >= -60 && gamma <= -1 )){
+        handleSkip();
+        setHasReset(false);
+      }
+      if(absbeta < 90 && (gamma >= -60 && gamma <= -1)){
+        handleCorrect();
+        setHasReset(false);
+      }
+      if(absbeta > 90 && (gamma <= 60 && gamma >= 1)){
+        handleSkip();
+        setHasReset(false);
+      }
+  }
   };
 
   window.addEventListener("deviceorientation", handleOrientation);
