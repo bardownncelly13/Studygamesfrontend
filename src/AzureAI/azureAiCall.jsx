@@ -4,7 +4,6 @@ import axios from 'axios';
 export default async function callAzureOpenAI(messages) {
   // Get current user
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  console.log("Backend URL:", backendUrl); // must show the full URL
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
