@@ -1,7 +1,7 @@
 // socket.js
 import { io } from "socket.io-client";
 
-const socket = io("https://my-express-server-211542461249.us-central1.run.app", {
+const socket = io("https://studygames-backend-80244932095.us-central1.run.app", {
   transports: ["websocket"], 
   upgrade: true,  
   withCredentials: true,    
