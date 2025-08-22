@@ -8,6 +8,7 @@ import LoginModal from './components/LoginModal'
 import LoginButton from "./components/loginbutton"
 import { Routes, Route } from "react-router-dom"
 import SpyPlay from "./games/spy/SpyPlay.jsx";
+import { motion, AnimatePresence } from "framer-motion";
 
 function searchbytitle(searchTerm){ //seaching functionality 
     return gamelist
@@ -46,31 +47,58 @@ const AppContent = () => {
     }
   }, [user]);
 
-  if (currentGame !== "selectGame") {
-    const GameComponent = gameComponents[currentGame];
+if (currentGame !== "selectGame") {
+  const GameComponent = gameComponents[currentGame];
 
-
-    if (!GameComponent) {
-      return (
-        <div className="text-white">
+  if (!GameComponent) {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="not-found"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="text-white"
+        >
           <button onClick={() => setCurrentGame("selectGame")}>← Back</button>
           <p>Game not found.</p>
-        </div>
-      );
-    }
-
-    return (
-      <Suspense fallback={<p>Loading game...</p>}>
-        <GameComponent onBack={() => setCurrentGame("selectGame")} />
-      </Suspense>
+        </motion.div>
+      </AnimatePresence>
     );
   }
+
   return (
-    <main>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentGame}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
+        className="h-full w-full"
+      >
+        <Suspense fallback={<p>Loading game...</p>}>
+          <GameComponent onBack={() => setCurrentGame("selectGame")} />
+        </Suspense>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+return (
+  <AnimatePresence mode="wait">
+    <motion.main
+      key="menu"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.25, ease: "easeInOut" }}
+    >
       <div className="pattern" />
-        <div className="flex justify-end p-6 relative z-1">
-          <LoginButton onLoginClick={() => setShowLoginModal(true)}/>
-        </div>
+      <div className="flex justify-end p-6 relative z-1">
+        <LoginButton onLoginClick={() => setShowLoginModal(true)} />
+      </div>
       <div className="wrapper">
         <header>
           <h1>
@@ -91,9 +119,7 @@ const AppContent = () => {
                 <GameCard
                   key={game.id}
                   game={game}
-                  onClick={() => {
-                    setCurrentGame(game.id);
-                  }}
+                  onClick={() => setCurrentGame(game.id)}
                 />
               ))
             ) : (
@@ -102,9 +128,13 @@ const AppContent = () => {
           </ul>
         </section>
       </div>
-      <LoginModal show={showLoginModal} onClose={() => setShowLoginModal(false)} />
-    </main>
-  );
+      <LoginModal
+        show={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
+    </motion.main>
+  </AnimatePresence>
+);
 };
 const App = () => (
   <AuthProvider>

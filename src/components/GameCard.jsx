@@ -6,7 +6,7 @@ const GameCard = ({ game:
 }) => {
 
     return (
-        <div className="game-card" onClick={onClick} style={{cursor:"pointer"}}>
+        <div className="game-card transform transition-transform duration-200 hover:scale-105" onClick={onClick} style={{cursor:"pointer"}}>
       <img
         src={poster_path ?
           `${poster_path}` : '/no-movie.png'}
