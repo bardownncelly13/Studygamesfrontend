@@ -12,7 +12,6 @@ export default function spyGame({ onBack }) {
       DeckMakerComponent={SpyDeckMaker}
       title="Spy"
       searchPlaceholder="Search for Spy Decks to use"
-      requireMotion={false}
       onBack={onBack}
     />
   );

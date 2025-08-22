@@ -121,7 +121,7 @@ export default function GameLoader({
                 isSelected={deck.id === selectedDeck}
                 playDeck={() => setCurrentDeck(deck)}
                 onDelete={() => handleDelete(deck.id)}
-                requireMotion={true}
+                requireMotion={requireMotion}
               />
             ))}
             {Adddeck && (
