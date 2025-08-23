@@ -221,7 +221,7 @@ useEffect(() => {
   };
 
   const handleEndGame = () => {
-    socket.emit("endGameSpy", { code: lobbyCode });
+    socket.emit("endGame", { code: lobbyCode });
     setGameStarted(false);
     setLocation(null);
     setRoles({});

@@ -159,7 +159,7 @@ const handleCreateLobby = async () => {
   setIsHost(true);
 
   //logToScreen("🚀 Emitting createLobby with code:", code);
-  socket.emit("createLobby", { code, host: { id: userId, name: playerName }, deck: deck.cards });
+  socket.emit("createLobbySpy", { code, host: { id: userId, name: playerName }, deck: deck.cards });
 
   const timeout = setTimeout(() => {
     //logToScreen("⚠️ Timed out waiting for lobbyCreated event!");

@@ -29,6 +29,7 @@ const gameComponents = {};
 for (const path in gameModules) {
   const gameId = path.split("/")[2].toLowerCase(); // Folder name = ID
   gameComponents[gameId] = React.lazy(gameModules[path]);
+  console.log(gameComponents)
 }
 
 const AppContent = () => {
@@ -124,7 +125,7 @@ return (
               ))
             ) : (
               <p>No games found.</p>
-            )}
+            )} 
           </ul>
         </section>
       </div>

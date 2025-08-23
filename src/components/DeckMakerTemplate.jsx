@@ -118,7 +118,10 @@ const handleExtractedText = (text) => {
   };
 
   const addCard = () => {
-    if (!newCardInput.trim()) return;
+    if (!newCardInput.trim()) {
+      alert("Please enter a promt.")
+      return;
+    }
     const newCard = { id: cards.length + 1, [game.cardKey]: newCardInput.trim() };
     setCards([...cards, newCard]);
     setNewCardInput("");
@@ -132,6 +135,7 @@ const handleExtractedText = (text) => {
 
   const saveDeck = async () => {
     if (!name.trim()) return alert("Please enter a deck name");
+    if (cards.length <= 0) return alert("Make some cards before saving")
     if (!window.confirm("Do you want to save the deck?")) return;
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
